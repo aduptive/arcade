@@ -2,9 +2,10 @@
 
 ## In flight
 
-- [x] Validate the latest air physics tuning together over a few runs (AIR_ACCEL_SAME 5000, AIR_ACCEL_REVERSE 10000, GROUND_MAX_SPEED 320, AIR_MAX_SPEED 240) — confirmed good
-- [ ] Decide whether the 320 → 240 speed cap drop on takeoff feels jarring (smooth carryover if so)
-- [ ] Pick the next Phase 3 ability: double jump (in-air recovery) vs shield (single fall save) vs world pickups
+- [ ] Validate the new Icy-Tower-style air control (ground velocity carries, air input is minor: AIR_MAX_SPEED 320, AIR_ACCEL_SAME 1200, AIR_ACCEL_REVERSE 2500, AIR_DRAG 400)
+- [x] ~~Decide whether the 320 → 240 speed cap drop on takeoff feels jarring~~ — moot, removed the cap mismatch
+- [ ] Decide whether to also add the Icy Tower jump-HEIGHT bonus from horizontal speed (separate from lateral carryover)
+- [ ] Pick the next Phase 3 ability: double jump vs shield vs world pickups
 
 ## Recently done
 

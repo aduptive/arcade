@@ -5,16 +5,16 @@ import { InputManager } from '@shared/input/InputManager'
 const PLATFORM_HEIGHT = 16
 const PLAYER_SIZE = 28
 const JUMP_VELOCITY = -780
-const GROUND_MAX_SPEED = 320 // velocidade máxima horizontal no chão (responsivo)
-const AIR_MAX_SPEED = 240 // velocidade máxima horizontal no ar (mais controlado)
-// Air control is asymmetric:
-//   - accelerating in current direction (or from rest) is fast and responsive
-//   - reversing direction is slower (commitment costs)
-//   - drag applies only when no input is pressed, so brief taps decay quickly
-//     instead of producing permanent drift
-const AIR_ACCEL_SAME = 5000 // px/s^2 — same direction as current motion or from rest
-const AIR_ACCEL_REVERSE = 10000 // px/s^2 — input opposes current motion
-const AIR_DRAG = 600 // px/s^2 — passive deceleration when no input in air
+const GROUND_MAX_SPEED = 320 // max horizontal speed on the ground (responsive)
+const AIR_MAX_SPEED = 320 // max horizontal speed in the air (matches ground so launch velocity carries)
+// Icy-Tower-style air control: ground velocity is the real resource, air input
+// only nudges. Players are rewarded for committing on the ground before takeoff.
+//   - air acceleration in either direction is small (input only adjusts, not steers)
+//   - reversing direction in the air takes deliberate, sustained input
+//   - drag on no-input is gentle, so the launched velocity persists across the arc
+const AIR_ACCEL_SAME = 1200 // px/s^2 — same direction as current motion or from rest
+const AIR_ACCEL_REVERSE = 2500 // px/s^2 — input opposes current motion
+const AIR_DRAG = 400 // px/s^2 — passive deceleration when no input in air
 const DEATH_ZONE_PADDING = 30
 
 // Super jump (Phase 3 — cooldown-based)

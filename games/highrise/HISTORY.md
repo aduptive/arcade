@@ -1,5 +1,14 @@
 # Highrise — History
 
+## 2026-05-17 — Icy-Tower-style air control: launch velocity is the resource
+
+- User design proposal: ground velocity should be the primary commitment; air input should only nudge, not steer.
+- Removed the air-vs-ground speed mismatch: `AIR_MAX_SPEED` raised from 240 to 320 to match ground, so the launch velocity is preserved on takeoff (no instant cap drop).
+- Lowered air accelerations dramatically: `AIR_ACCEL_SAME` from 5000 to 1200, `AIR_ACCEL_REVERSE` from 10000 to 2500. Air input still works for adjustments, but takes sustained pressure to materially change the trajectory.
+- Lowered `AIR_DRAG` from 600 to 400 so the launched velocity persists farther across the arc when no key is held.
+- Net effect: jumps now reward a planned run-up. Standing-jumps go almost straight up. Reversing in the air is possible but visibly costs time.
+- Open follow-up (not implemented yet): the classic Icy Tower mechanic where horizontal ground speed also bumps jump height. Could become Phase 4 (combo) or its own item.
+
 ## 2026-05-17 — Air drag added for fine-control precision
 
 - User feedback: small adjustments in the air were hard, because brief taps gained velocity that was preserved indefinitely (no decay), turning small inputs into long drifts.

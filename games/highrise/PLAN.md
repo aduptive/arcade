@@ -21,7 +21,8 @@
 
 - [x] Super jump — cooldown-based, 1.5× velocity, 60s recharge, max 3 charges
 - [x] Air control split into same-direction and reverse-direction acceleration
-- [x] Ground vs air max horizontal speed split (320 vs 240)
+- [x] Ground velocity carries into the air (ground=air max speed = 320)
+- [x] Air input is small relative to ground commitment (Icy-Tower-style)
 - [ ] Double jump — second jump while airborne, for recovery
 - [ ] Shield — single fall save
 - [ ] Score multiplier — temporary 2× scoring
@@ -32,7 +33,7 @@
 - [ ] Track consecutive jumps without touching the ground
 - [ ] Score multiplier driven by combo length
 - [ ] Visual feedback (large multiplier text, screen shake, particles)
-- [ ] Decide whether to add the Icy Tower run-into-jump speed-bonus mechanic
+- [ ] Decide whether to add the Icy Tower run-into-jump JUMP HEIGHT bonus (separate from the lateral-velocity carryover already in Phase 3)
 
 ## Phase 5 — Scoring and Hall of Fame
 
