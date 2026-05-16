@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <title>ADUPTIVE ARCADE</title>
+    <style>
+      :root {
+        --bg: #0a0a0a;
+        --fg: #f5e6c4;
+        --gold: #c9a96b;
+        --muted: #888;
+        --card: #14140e;
+        --border: #2a261c;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: Georgia, 'Times New Roman', serif;
+        min-height: 100vh;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        box-sizing: border-box;
+      }
+      .container {
+        max-width: 640px;
+        width: 100%;
+      }
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+      h1 {
+        font-size: 3rem;
+        letter-spacing: 0.2em;
+        margin: 0 0 0.4rem;
+        color: var(--fg);
+      }
+      .tag {
+        color: var(--gold);
+        font-style: italic;
+        letter-spacing: 0.1em;
+        font-size: 0.9rem;
+      }
+      .games {
+        display: grid;
+        gap: 1rem;
+      }
+      .game-card {
+        display: block;
+        background: var(--card);
+        padding: 1.5rem 1.75rem;
+        text-decoration: none;
+        color: inherit;
+        border: 1px solid var(--border);
+        transition: border-color 0.2s, transform 0.2s;
+      }
+      .game-card:hover {
+        border-color: var(--gold);
+        transform: translateY(-2px);
+      }
+      .game-card h2 {
+        margin: 0 0 0.4rem;
+        font-size: 1.5rem;
+        letter-spacing: 0.05em;
+      }
+      .game-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+      footer {
+        margin-top: 3rem;
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      footer a {
+        color: var(--gold);
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>ARCADE</h1>
+        <div class="tag">aduptive games</div>
+      </header>
+
+      <div class="games">
+        <a class="game-card" href="games/soberba/">
+          <h2>SOBERBA</h2>
+          <p>Tetris físico de pedras antigas. O céu é proibido.</p>
+        </a>
+        <a class="game-card" href="games/highrise/">
+          <h2>HIGHRISE</h2>
+          <p>Suba o quanto conseguir. Não olhe pra baixo.</p>
+        </a>
+      </div>
+
+      <footer>
+        <a href="https://github.com/aduptive/arcade" target="_blank" rel="noopener">github.com/aduptive/arcade</a>
+      </footer>
+    </div>
+  </body>
+</html>

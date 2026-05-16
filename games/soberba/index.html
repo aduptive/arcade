@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#0a1428" />
+    <title>SOBERBA</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #0a1428;
+        overflow: hidden;
+        height: 100%;
+        width: 100%;
+        font-family: Georgia, 'Times New Roman', serif;
+        color: #f5e6c4;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #game {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      canvas { display: block; }
+    </style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
