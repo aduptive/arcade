@@ -7,11 +7,14 @@ const PLAYER_SIZE = 28
 const JUMP_VELOCITY = -780
 const GROUND_MAX_SPEED = 320 // velocidade máxima horizontal no chão (responsivo)
 const AIR_MAX_SPEED = 240 // velocidade máxima horizontal no ar (mais controlado)
-// Controle no ar é assimétrico:
-//   acelerar na direção atual (ou do zero) = rápido (responsivo)
-//   inverter a direção = lento (decisão pesa, recompensa precisão)
-const AIR_ACCEL_SAME = 5000 // px/s² — acelerando na direção atual ou do parado
-const AIR_ACCEL_REVERSE = 10000 // px/s² — invertendo direção
+// Air control is asymmetric:
+//   - accelerating in current direction (or from rest) is fast and responsive
+//   - reversing direction is slower (commitment costs)
+//   - drag applies only when no input is pressed, so brief taps decay quickly
+//     instead of producing permanent drift
+const AIR_ACCEL_SAME = 5000 // px/s^2 — same direction as current motion or from rest
+const AIR_ACCEL_REVERSE = 10000 // px/s^2 — input opposes current motion
+const AIR_DRAG = 600 // px/s^2 — passive deceleration when no input in air
 const DEATH_ZONE_PADDING = 30
 
 // Super jump (Phase 3 — cooldown-based)
@@ -280,12 +283,19 @@ export class GameScene extends Phaser.Scene {
     } else {
       const dtSec = Math.min(dt, 100) / 1000
       let vx = this.playerBody.velocity.x
-      if (this.inputMgr.isPressed('left')) {
+      const wantsLeft = this.inputMgr.isPressed('left')
+      const wantsRight = this.inputMgr.isPressed('right')
+      if (wantsLeft) {
         const accel = vx > 0 ? AIR_ACCEL_REVERSE : AIR_ACCEL_SAME
         vx -= accel * dtSec
-      } else if (this.inputMgr.isPressed('right')) {
+      } else if (wantsRight) {
         const accel = vx < 0 ? AIR_ACCEL_REVERSE : AIR_ACCEL_SAME
         vx += accel * dtSec
+      } else {
+        // No input: drag decays residual velocity so brief taps do not drift forever.
+        const drag = AIR_DRAG * dtSec
+        if (Math.abs(vx) <= drag) vx = 0
+        else vx -= Math.sign(vx) * drag
       }
       vx = Math.max(-AIR_MAX_SPEED, Math.min(AIR_MAX_SPEED, vx))
       this.playerBody.setVelocityX(vx)

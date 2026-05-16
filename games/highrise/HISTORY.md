@@ -1,5 +1,12 @@
 # Highrise — History
 
+## 2026-05-17 — Air drag added for fine-control precision
+
+- User feedback: small adjustments in the air were hard, because brief taps gained velocity that was preserved indefinitely (no decay), turning small inputs into long drifts.
+- Added `AIR_DRAG = 600 px/s^2` that applies only when no horizontal input is pressed in the air.
+- Result: holding a direction preserves momentum (jump arc feel intact), releasing the direction decays the velocity over a few tenths of a second. Brief taps now translate to small displacements.
+- Tuning lever: lower `AIR_DRAG` for more momentum (less precision), higher for more precision (less momentum).
+
 ## 2026-05-17 — Adopted the four-file project convention
 
 - Created `PROJECT.md`, `PLAN.md` and `TODO.md` at the game root, alongside the existing `HISTORY.md`, following the global four-file convention.
