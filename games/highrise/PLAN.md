@@ -75,7 +75,8 @@ This phase is a strategic pivot: instead of committing to a single visual identi
 
 Ranked rough order of appeal:
 
-- [x] NY skyscraper — step = window ledge with AC unit, classic Crazy Climber homage
+- [x] NY skyscraper — step = window ledge with AC unit, classic Crazy Climber homage; tiled glass-tower structure behind
+- [x] Arborea — giant tree map: trunk structure tiles infinitely upward, parallax forest behind, steps are leafy branches
 - [ ] Pão de Açúcar — step = granite outcrop, Rio scenery
 - [ ] Inferno — step = giant skull / demon rib, lava below (resurrects single-theme proposal #2)
 - [ ] Submarino — step = shipwreck debris / coral, octopus character (resurrects proposal #13)

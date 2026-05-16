@@ -2,12 +2,23 @@ import Phaser from 'phaser'
 
 /**
  * A MapTheme bundles everything that defines the look and feel of a single
- * climbing location: background, the visual style of every step, the palette,
- * and (later) themed audio and pickup labels.
+ * climbing location: background, optional climbing structure, the visual style
+ * of every step, the palette, and (later) themed audio and pickup labels.
  *
  * The contract is intentionally narrow: the gameplay (physics, scoring,
  * pickups, controls) is identical across all maps. Themes only customize
  * appearance and narrative flair.
+ *
+ * Rendering order (deepest to shallowest):
+ *   1. paintBackground   — static or parallax (scrollFactor < 1) ambience
+ *   2. paintStructure    — optional vertical structure that scrolls 1:1 with
+ *                          the camera and tiles infinitely upward (tower wall,
+ *                          tree trunk, cathedral facade, etc.)
+ *   3. steps             — drawn by paintStep, scroll 1:1
+ *   4. pickups, player, HUD
+ *
+ * Maps where the structure IS the step (e.g. favela rooftops) just don't
+ * implement paintStructure.
  */
 
 export interface BackgroundPaintArgs {
@@ -37,11 +48,22 @@ export interface MapTheme {
   backgroundColor: number
 
   /**
-   * Paints the static background once on scene create. Should set scroll
-   * factor 0 for fixed layers and use add.tileSprite or scaled graphics for
-   * parallax layers.
+   * Paints the static background once on scene create. Use `scrollFactor < 1`
+   * for parallax layers (distant skyline, far hills, etc.) and `scrollFactor 0`
+   * for absolutely fixed layers (vignette, gradient).
    */
   paintBackground: (args: BackgroundPaintArgs) => void
+
+  /**
+   * Optional vertical structure rendered above the background but below the
+   * steps. Scrolls 1:1 with the camera and is expected to tile infinitely
+   * upward — typically implemented with `scene.add.tileSprite` over a
+   * generated texture. This is the thing the player is climbing on:
+   * the tower wall behind window ledges, the trunk of a giant tree,
+   * the facade of a cathedral. Maps where every step is its own building
+   * (favela rooftops) leave this undefined.
+   */
+  paintStructure?: (args: BackgroundPaintArgs) => void
 
   /**
    * Creates the primary collision rectangle for a step PLUS any visual

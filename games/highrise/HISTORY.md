@@ -1,5 +1,14 @@
 # Highrise — History
 
+## 2026-05-17 — MapTheme gains a paintStructure layer; new Arborea map
+
+- User architectural insight: maps should have TWO background layers — a far parallax background AND a "structure" layer that scrolls 1:1 with the camera, tiles infinitely vertically, and represents the actual thing being climbed (the tower wall behind NY ledges, the trunk of a giant tree, etc.).
+- Added optional `paintStructure` to `MapTheme`, rendered between parallax background and steps. Layering convention is now: parallax bg → structure → steps → pickups → player → HUD.
+- Implemented via Phaser `TileSprite` over a procedurally generated tile texture, so a single GameObject covers infinite vertical extent without thousands of draw calls.
+- Refactored NY map to use it: tile texture is a 32x48 wall slab with a lit window, tiled to fill a 540-wide tower behind the ledges.
+- Added new **Arborea** map (giant tree): trunk structure via tiled bark texture; parallax background with 3 layers of forest silhouettes + floating dust motes; steps are green branches with leaf clusters, perched birds, and hanging vines.
+- Favela map intentionally leaves `paintStructure` undefined: each rooftop IS its own building.
+
 ## 2026-05-17 — Sprite characters from Craftpix (Woodcutter / GraveRobber / SteamMan) with state-driven animations
 
 - Replaced the previous 32x32 chibi spritesheet (OpenGameArt download with no per-frame labels) with three 48x48 Craftpix character packs that ship each animation as its own labeled spritesheet (idle, walk, run, jump, climb, push, craft, hurt, death, attack1-3).

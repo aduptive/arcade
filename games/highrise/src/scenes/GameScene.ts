@@ -138,6 +138,7 @@ export class GameScene extends Phaser.Scene {
     this.physics.world.gravity.y = this.baseGravityY // reset in case of scene restart
 
     this.mapTheme.paintBackground({ scene: this, width: GAME_WIDTH, height: GAME_HEIGHT })
+    this.mapTheme.paintStructure?.({ scene: this, width: GAME_WIDTH, height: GAME_HEIGHT })
     this.platforms = this.physics.add.staticGroup()
     this.pickups = this.physics.add.staticGroup()
     this.spawnInitialPlatforms()

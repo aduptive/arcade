@@ -14,6 +14,7 @@
 
 ## Recently done
 
+- [x] MapTheme.paintStructure layer (TileSprite vertical infinite) — refactored NY tower; new Arborea map with tree-trunk structure
 - [x] Sprite characters with proper animations (Woodcutter / GraveRobber / SteamMan from Craftpix, state-driven idle/walk/jump/climb with horizontal flip)
 - [x] Moved arcade folder out of foodish, now at `/Users/andreascarpello/Projects/Aduptive/arcade/`
 - [x] Reachability constraint on step spawn (max 180px gap, no more impossible jumps on wider canvases)
