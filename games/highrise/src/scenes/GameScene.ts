@@ -5,7 +5,7 @@ import { InputManager } from '@shared/input/InputManager'
 const PLATFORM_HEIGHT = 16
 const PLAYER_SIZE = 28
 const JUMP_VELOCITY = -780
-const MOVE_SPEED = 320
+const MOVE_SPEED = 240
 // Controle no ar é assimétrico:
 //   acelerar na direção atual (ou do zero) = rápido (responsivo)
 //   inverter a direção = lento (decisão pesa, recompensa precisão)
