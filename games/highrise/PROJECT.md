@@ -6,7 +6,7 @@ Vertical-scroll jumper inspired by Icy Tower and Doodle Jump. Single-player, sco
 
 ## Current status
 
-Active development. Phase 3 essentially done (super jump, air physics tuned, world pickups, drop-through). Next phase is a strategic pivot: instead of locking into a single visual identity, the game becomes a Crazy Climber-style multi-map platform where each map's "step" is thematic architecture (favela rooftops, NY window ledges, gargoyles, etc.). First map: Favela.
+Active development. Multi-map architecture shipped: `MapTheme` + `CharacterSkin` + `MenuScene` + generic `GameScene`. Three maps (Default, Favela, NY) and three characters (Cubinho, Climber, Capivara) selectable via a menu; selection persists across sessions in localStorage. Gameplay loop (Phase 1-3) is complete and stable. Next focus is content polish (themed pickups per map, sprites, sound) and combo system (Phase 4).
 
 ## Scope
 

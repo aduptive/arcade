@@ -1,5 +1,37 @@
 # Highrise — History
 
+## 2026-05-17 — Multi-map architecture shipped (Default + Favela + NY) + MenuScene
+
+Architectural refactor from the strategic pivot landed in a single overnight session, with the gameplay loop staying identical the entire time.
+
+**Architecture:**
+- `MapTheme` interface (`src/maps/MapTheme.ts`): paintBackground, paintStep, backgroundColor, name, tagline, optional HUD/flash accents
+- `CharacterSkin` interface (`src/characters/CharacterSkin.ts`): paintCharacter, name, id
+- `GameScene.init(data)` reads `mapId` and `characterId` from scene data and looks up the theme/character via `getMapById` / `getCharacterById`
+- Everything that was hardcoded (background colors, step paint, player paint) now goes through these interfaces
+
+**Maps shipped:**
+- `default` (Night Sky) — original look, preserves visual continuity
+- `favela` (Morro Acima) — warm sunset gradient, distant hills with Cristo silhouette, colored rooftops with antennas / clotheslines / water tanks / satellite dishes as decorations
+- `ny` (Skyline) — direct nod to Crazy Climber 1980; deep blue night, far parallax grid of lit windows, moon. Steps are concrete window ledges with AC units, pigeons or satellite dishes
+
+**Characters shipped:**
+- `default` (Cubinho) — original orange rectangle
+- `climber` — blue body with gold helmet hint
+- `capivara` — brown rectangle for the favela map
+
+**Selection UX:**
+- New `MenuScene` between BootScene and GameScene. Title, map cards (live color preview), tagline, character cards (live paintCharacter preview), big PLAY button
+- Selection persists in `localStorage` so reopening the game keeps the last choice
+- GameOverScene now offers AGAIN (replay same map/character) and MENU (back to selection) buttons; ENTER/SPACE = AGAIN, ESC = MENU
+- ESC during a run bails out to the menu without dying — useful for cycling maps quickly
+
+**What's still placeholder (next-day work):**
+- Character sprites are just colored rectangles; real sprites come in Phase 6 polish
+- Music is silent; per-map audio slots are designed but unwired
+- Themed pickups per map (açaí/guaraná for favela; etc.) — pickup mechanics work, only the visuals are still the generic colored diamonds
+- Map card previews show only a background-color swatch; a real thumbnail render would be nicer
+
 ## 2026-05-17 — Strategic pivot: Crazy-Climber multi-map model with thematic steps
 
 - Long brainstorm on the visual/narrative direction ("the dress"). After surveying ~15 single-theme proposals (alpinist, devil, dinosaur, Babel, cat, hacker, soul, capybara, steampunk, DJ, painter, octopus, pizzaiolo, AI, etc.), the user proposed a fundamentally better framing: a **Crazy Climber-style multi-map game** with selectable characters.

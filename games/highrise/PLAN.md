@@ -50,29 +50,32 @@ This phase is a strategic pivot: instead of committing to a single visual identi
 
 ### Architecture (foundation)
 
-- [ ] Extract `MapTheme` config type: palette, BG layers, step style and detail (rooftop / window / branch / etc.), pickup theming, music, narrative flair
-- [ ] Extract `CharacterSkin` config type: sprite, animation set; same physics across all characters
-- [ ] `MenuScene` for map and character selection
-- [ ] `GameScene` becomes generic, parameterized by the active map and character
+- [x] Extract `MapTheme` config type: paintBackground, paintStep, color, name, tagline
+- [x] Extract `CharacterSkin` config type: paintCharacter, name, id
+- [x] `MenuScene` for map and character selection
+- [x] `GameScene` becomes generic, parameterized via `init(data)`
+- [x] Selection persisted via localStorage
+- [x] ESC during a run returns to the menu (devtest convenience)
+- [x] GameOverScene routes AGAIN (replay) or MENU (re-select)
 
 ### First map: Favela
 
-- [ ] Step = colored rooftop with small detail (water tank, clothesline, antenna, satellite dish)
-- [ ] BG layers: hills, power lines crossing the sky, Cristo Redentor distant on the horizon
-- [ ] Palette: warm tropical (rosa, amarelo, ciano, verde-folha)
+- [x] Step = colored rooftop with decorations (water tank, antenna, clothesline, satellite dish)
+- [x] BG layers: warm sunset gradient over hills with Cristo silhouette and floating haze
+- [x] Palette: warm tropical
 - [ ] Themed pickups: açaí (coin), guaraná (super), folha (lunar), saquinho (mystery)
 - [ ] Music: funk melódico / samba (placeholder until commissioned)
 
 ### First character: generic climber
 
-- [ ] Faceless climber sprite (gender-ambiguous, helmet + backpack) as default
-- [ ] Idle / jump / fall animation frames (or static sprite for v1)
+- [x] Placeholder climber rectangle (blue body, gold helmet hint) — sprite art comes in Phase 6
+- [ ] Idle / jump / fall animation frames once sprite exists
 
 ### Subsequent maps (future content drops)
 
 Ranked rough order of appeal:
 
-- [ ] NY skyscraper — step = window ledge with AC unit, classic Crazy Climber homage
+- [x] NY skyscraper — step = window ledge with AC unit, classic Crazy Climber homage
 - [ ] Pão de Açúcar — step = granite outcrop, Rio scenery
 - [ ] Inferno — step = giant skull / demon rib, lava below (resurrects single-theme proposal #2)
 - [ ] Submarino — step = shipwreck debris / coral, octopus character (resurrects proposal #13)
@@ -84,7 +87,7 @@ Ranked rough order of appeal:
 
 ### Subsequent characters (future content drops)
 
-- [ ] Capivara
+- [x] Capivara (placeholder rectangle)
 - [ ] Cat
 - [ ] Italian alpinist (Marco)
 - [ ] Astronaut

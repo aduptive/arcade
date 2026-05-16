@@ -2,16 +2,22 @@
 
 ## In flight
 
-- [ ] **Next session, big one:** refactor to multi-map architecture (`MapTheme`, `CharacterSkin`, `MenuScene`, generic `GameScene`)
-- [ ] First map after refactor: Favela (steps = colored rooftops with details, BG with Cristo + power lines, funk/samba placeholder music)
-- [ ] First character after refactor: generic climber (faceless, helmet + backpack)
-- [ ] Validate the new pickup system, super-jump boost, and drop-through together after a few runs
-- [ ] Tune pickup spawn chance (15% per step) and the mystery-box outcome distribution
+- [ ] Play-test the new menu + 3 maps (Default / Favela / NY) + 3 characters (Cubinho / Climber / Capivara) and report what feels off
+- [ ] Themed pickups per map (açaí/guaraná on favela; bagel/coffee on NY; etc.) — mechanics already work, only visuals change
+- [ ] Map card preview thumbnail (a tiny rendered sample of the actual map background instead of a flat color swatch)
+- [ ] Audio infrastructure stub (one SoundManager that maps eventually load from)
+- [ ] Tune pickup spawn chance (15% per step) and the mystery-box outcome distribution after more runs
 - [ ] Decide whether to also add the Icy Tower jump-HEIGHT bonus from horizontal speed
 - [ ] Sustained super-jump boost: validate that 2s and 20% gravity feels right (vs alternatives like 3s @ 30% or 1.5s @ 10%)
 
 ## Recently done
 
+- [x] Multi-map architecture: MapTheme + CharacterSkin + MenuScene + generic GameScene
+- [x] Three maps shipped: Default (night sky), Favela (rooftops with decorations), NY (window ledges, Crazy Climber homage)
+- [x] Three characters shipped: Cubinho (orange), Climber (blue), Capivara (brown)
+- [x] localStorage persistence of last map / character selection
+- [x] ESC during a run goes back to MenuScene without dying
+- [x] GameOverScene AGAIN / MENU buttons + keyboard shortcuts
 - [x] Super jump becomes a sustained 2s low-gravity boost instead of an instant 1.5x impulse
 - [x] Drop-through with `down` to reach pickups below the current step
 - [x] World pickups: coin, super, lunar gravity, mystery box (with random outcomes)

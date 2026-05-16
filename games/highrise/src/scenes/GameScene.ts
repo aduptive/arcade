@@ -133,6 +133,17 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.pickups, (_player, pickup) => {
       this.collectPickup(pickup as Phaser.GameObjects.Rectangle)
     })
+
+    // Convenience: ESC bails out of a run back to the menu without dying.
+    // Useful for cycling through maps and characters quickly.
+    this.input.keyboard?.once('keydown-ESC', () => {
+      // Restore gravity in case a per-body offset or world override is active.
+      this.physics.world.gravity.y = this.baseGravityY
+      this.scene.start('MenuScene', {
+        mapId: this.mapTheme.id,
+        characterId: this.characterSkin.id,
+      })
+    })
   }
 
   private spawnInitialPlatforms() {

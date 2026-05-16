@@ -1,7 +1,26 @@
 import Phaser from 'phaser'
 import { GAME_WIDTH, GAME_HEIGHT } from '../main'
-import { ALL_MAPS, DEFAULT_MAP_ID } from '../maps'
-import { ALL_CHARACTERS, DEFAULT_CHARACTER_ID } from '../characters'
+import { ALL_MAPS, DEFAULT_MAP_ID, getMapById } from '../maps'
+import { ALL_CHARACTERS, DEFAULT_CHARACTER_ID, getCharacterById } from '../characters'
+
+const STORAGE_MAP_KEY = 'highrise.lastMapId'
+const STORAGE_CHAR_KEY = 'highrise.lastCharacterId'
+
+function readSaved(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function writeSaved(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // Silently ignore — quota exceeded, private mode, etc.
+  }
+}
 
 /**
  * Map + character selection screen. Vector-only for v1, no images required.
@@ -28,8 +47,13 @@ export class MenuScene extends Phaser.Scene {
   }
 
   init(data: { mapId?: string; characterId?: string }) {
-    if (data?.mapId) this.selectedMapId = data.mapId
-    if (data?.characterId) this.selectedCharacterId = data.characterId
+    // Selection priority: explicit data (e.g. returning from a run) > localStorage > defaults
+    const savedMap = readSaved(STORAGE_MAP_KEY)
+    const savedChar = readSaved(STORAGE_CHAR_KEY)
+    this.selectedMapId = data?.mapId ?? (savedMap && getMapById(savedMap).id === savedMap ? savedMap : DEFAULT_MAP_ID)
+    this.selectedCharacterId =
+      data?.characterId ??
+      (savedChar && getCharacterById(savedChar).id === savedChar ? savedChar : DEFAULT_CHARACTER_ID)
   }
 
   create() {
@@ -236,6 +260,8 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private startGame() {
+    writeSaved(STORAGE_MAP_KEY, this.selectedMapId)
+    writeSaved(STORAGE_CHAR_KEY, this.selectedCharacterId)
     this.scene.start('GameScene', {
       mapId: this.selectedMapId,
       characterId: this.selectedCharacterId,
