@@ -6,7 +6,7 @@ const PLATFORM_HEIGHT = 16
 const PLAYER_SIZE = 28
 const JUMP_VELOCITY = -780
 const MOVE_SPEED = 320
-const AIR_ACCEL = 1500 // px/s² — quão rápido você consegue mudar direção no ar
+const AIR_ACCEL = 4000 // px/s² — quão rápido você consegue mudar direção no ar
 const DEATH_ZONE_PADDING = 30
 
 // Super jump (Phase 3 — cooldown-based)
