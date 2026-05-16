@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 import { GAME_WIDTH, GAME_HEIGHT } from '../main'
 import { InputManager } from '@shared/input/InputManager'
 import { MobileControls } from '@shared/input/MobileControls'
+import { SoundManager } from '@shared/audio/SoundManager'
 import {
   createPickup,
   PICKUP_HOVER_OFFSET,
@@ -151,6 +152,8 @@ export class GameScene extends Phaser.Scene {
   private lastLandedPlatform: Phaser.GameObjects.GameObject | null = null
   private comboStandStartMs = 0
   private comboText!: Phaser.GameObjects.Text
+  /** Semantic audio dispatcher; shadowed name `audio` to avoid Phaser's `this.sound`. */
+  private audio!: SoundManager
   private mapTheme!: MapTheme
   private characterSkin!: CharacterSkin
   /** Tracks the last-spawned step's center X and width so the next step can be constrained within reach. */
@@ -204,6 +207,7 @@ export class GameScene extends Phaser.Scene {
     this.lastLandedPlatform = null
     this.comboStandStartMs = 0
     this.inputMgr = new InputManager(this)
+    this.audio = new SoundManager(this)
     this.cameras.main.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 1000000)
     this.physics.world.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 2000000)
     // Always force the world gravity to the known baseline on scene create.
@@ -482,6 +486,7 @@ export class GameScene extends Phaser.Scene {
       case 'coin':
         this.addPoints(50)
         this.flashNotification('+50', '#ffd700')
+        this.audio.play('pickup_coin')
         break
       case 'super':
         if (this.gainSuperCharge()) {
@@ -489,13 +494,16 @@ export class GameScene extends Phaser.Scene {
         } else {
           this.flashNotification('SUPER CHEIO', '#7ad4ff')
         }
+        this.audio.play('pickup_super')
         break
       case 'lunar':
         this.setGravityEffect('lunar', 0.5, 10000)
         this.flashNotification('LUNAR', '#a07acc')
+        this.audio.play('pickup_lunar')
         break
       case 'mystery':
         this.applyMystery()
+        this.audio.play('pickup_mystery')
         break
     }
   }
@@ -649,7 +657,10 @@ export class GameScene extends Phaser.Scene {
       // New step UPWARD: combo grows.
       this.combo += 1
       if (this.combo > this.bestCombo) this.bestCombo = this.combo
-      if (this.combo >= 2) this.flashComboGain()
+      if (this.combo >= 2) {
+        this.flashComboGain()
+        this.audio.play('combo_inc')
+      }
     } else {
       // New step but at the same height or lower: combo break + bonus payout.
       this.breakCombo()
@@ -657,6 +668,7 @@ export class GameScene extends Phaser.Scene {
     }
     this.lastLandedPlatform = platform
     this.comboStandStartMs = this.time.now
+    this.audio.play('land')
     this.updateComboHUD()
   }
 
@@ -665,6 +677,7 @@ export class GameScene extends Phaser.Scene {
       const bonus = this.combo * COMBO_POINTS_PER_STEP
       this.addPoints(bonus)
       this.flashNotification(`COMBO +${bonus}`, '#ffd93d')
+      this.audio.play('combo_break')
     }
     this.combo = 0
     this.lastLandedPlatform = null
@@ -889,8 +902,10 @@ export class GameScene extends Phaser.Scene {
         this.superBoostUntil = this.time.now + SUPER_JUMP_BOOST_DURATION_MS
         this.superJumpCharges--
         this.flashSuperUsed()
+        this.audio.play('super_jump')
       } else if (this.inputMgr.justPressed('up')) {
         this.playerBody.setVelocityY(JUMP_VELOCITY)
+        this.audio.play('jump')
       } else if (this.inputMgr.justPressed('down')) {
         this.dropThroughUntil = this.time.now + 250
         this.playerBody.setVelocityY(60) // small nudge so the player clears the step
@@ -945,6 +960,7 @@ export class GameScene extends Phaser.Scene {
       this.currentLevel = cfg.level
       this.levelText.setText(`NÍVEL ${this.currentLevel}`)
       this.flashLevelUp(this.currentLevel)
+      this.audio.play('level_up')
     }
 
     // ---- Câmera: auto-scroll híbrido ----
@@ -994,6 +1010,7 @@ export class GameScene extends Phaser.Scene {
     if (this.player.y > cam.scrollY + GAME_HEIGHT + DEATH_ZONE_PADDING) {
       // Settle a pending combo into bonus points so it's not silently lost.
       this.breakCombo()
+      this.audio.play('death')
       // Restore gravity before leaving the scene so the next run starts clean.
       this.physics.world.gravity.y = this.baseGravityY
       this.scene.start('GameOverScene', {
