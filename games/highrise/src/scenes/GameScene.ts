@@ -6,7 +6,11 @@ const PLATFORM_HEIGHT = 16
 const PLAYER_SIZE = 28
 const JUMP_VELOCITY = -780
 const MOVE_SPEED = 320
-const AIR_ACCEL = 5000 // px/s² — quão rápido você consegue mudar direção no ar
+// Controle no ar é assimétrico:
+//   acelerar na direção atual (ou do zero) = rápido (responsivo)
+//   inverter a direção = lento (decisão pesa, recompensa precisão)
+const AIR_ACCEL_SAME = 5000 // px/s² — acelerando na direção atual ou do parado
+const AIR_ACCEL_REVERSE = 1500 // px/s² — invertendo direção
 const DEATH_ZONE_PADDING = 30
 
 // Super jump (Phase 3 — cooldown-based)
@@ -275,8 +279,13 @@ export class GameScene extends Phaser.Scene {
     } else {
       const dtSec = Math.min(dt, 100) / 1000
       let vx = this.playerBody.velocity.x
-      if (this.inputMgr.isPressed('left')) vx -= AIR_ACCEL * dtSec
-      else if (this.inputMgr.isPressed('right')) vx += AIR_ACCEL * dtSec
+      if (this.inputMgr.isPressed('left')) {
+        const accel = vx > 0 ? AIR_ACCEL_REVERSE : AIR_ACCEL_SAME
+        vx -= accel * dtSec
+      } else if (this.inputMgr.isPressed('right')) {
+        const accel = vx < 0 ? AIR_ACCEL_REVERSE : AIR_ACCEL_SAME
+        vx += accel * dtSec
+      }
       vx = Math.max(-MOVE_SPEED, Math.min(MOVE_SPEED, vx))
       this.playerBody.setVelocityX(vx)
     }

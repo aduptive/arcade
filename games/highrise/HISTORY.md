@@ -1,10 +1,18 @@
 # Highrise — History
 
+## 2026-05-17 — Air control assimétrico (acelerar ≠ inverter)
+
+- Insight do user após 5000: o problema não era responsividade geral, era a velocidade de **inversão de direção**.
+- Split em duas constantes:
+  - `AIR_ACCEL_SAME = 5000` — acelerar na direção atual (ou do parado): responsivo
+  - `AIR_ACCEL_REVERSE = 1500` — inverter direção (vx tem sinal oposto ao input): lento, "tem peso"
+- Resultado: pulo é responsivo (atinge max speed rápido), mas se comprometer com a direção tem custo. Recompensa decisão antes do pulo.
+- Padrão clássico de bons platformers (Celeste, Super Meat Boy fazem variações disso).
+
 ## 2026-05-17 — Tuning: AIR_ACCEL 1500 → 4000 (controle no ar mais responsivo)
 
 - Re-tuning depois do user testar 1500 e achar muito flutuante.
 - Tempo pra inverter de full speed pra full speed contrário: ~0.16s (quase como no chão).
-- Decisão de design: priorizamos controle preciso > momentum realista. Faz sentido pro tipo de jogo (mira em steps cada vez menores conforme nível sobe).
 
 ## 2026-05-17 — Tuning: AIR_ACCEL 2500 → 1500 (mais flutuante)
 
