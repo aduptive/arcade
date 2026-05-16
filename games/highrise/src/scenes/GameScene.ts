@@ -26,12 +26,18 @@ const PLATFORM_HEIGHT = 16
  */
 const PLAYER_VISUAL_SIZE = 112
 /**
- * Logical size of the player's physics body. Kept small so the player can
- * still land precisely on the smallest level-10 steps (50 px wide).
+ * Physics body dimensions, in world pixels. The body is the character's
+ * "feet + torso" footprint: wide enough to read as the character's body but
+ * still narrower than the smallest level-10 step (50 px wide).
  */
-const PLAYER_BODY_SIZE = 28
-// Backward-compat alias for the few spots that still want a single size hint.
-const PLAYER_SIZE = PLAYER_BODY_SIZE
+const PLAYER_BODY_WIDTH = 40
+const PLAYER_BODY_HEIGHT = 60
+/**
+ * Distance between the body's bottom edge and the visual's bottom edge.
+ * Compensates for the empty pixels at the bottom of the sprite frame so the
+ * feet of the rendered character visually rest on top of the step.
+ */
+const PLAYER_BODY_FOOT_INSET = 6
 const JUMP_VELOCITY = -780
 const GROUND_MAX_SPEED = 320 // max horizontal speed on the ground (responsive)
 const AIR_MAX_SPEED = 320 // max horizontal speed in the air (matches ground so launch velocity carries)
@@ -243,13 +249,27 @@ export class GameScene extends Phaser.Scene {
     })
     this.physics.add.existing(this.player)
     this.playerBody = this.player.body as Phaser.Physics.Arcade.Body
-    // Body stays small for tight collisions on narrow steps; the visual is
-    // free to be chunky around it. Offset the body to center within the
-    // (possibly larger) visual.
-    this.playerBody.setSize(PLAYER_BODY_SIZE, PLAYER_BODY_SIZE)
+    // Body is positioned at the BOTTOM-CENTER of the visual (where the feet
+    // are), not the visual's geometric center. This way the character looks
+    // like it's standing on top of the step, instead of sinking knee-deep
+    // into it.
+    //
+    // Arcade body's setSize/setOffset use the GameObject's INTRINSIC width
+    // and height — for sprites that's the texture frame (48x48 here) before
+    // scale; for placeholder rectangles that's the rect's authored size.
+    // We compute the body size and offset in the GameObject's local space
+    // so the math works for both.
+    const playerScaleX = (this.player as { scaleX?: number }).scaleX ?? 1
+    const playerScaleY = (this.player as { scaleY?: number }).scaleY ?? 1
+    const localW = this.player.width ?? PLAYER_VISUAL_SIZE
+    const localH = this.player.height ?? PLAYER_VISUAL_SIZE
+    const bodyLocalW = PLAYER_BODY_WIDTH / playerScaleX
+    const bodyLocalH = PLAYER_BODY_HEIGHT / playerScaleY
+    const footInsetLocal = PLAYER_BODY_FOOT_INSET / playerScaleY
+    this.playerBody.setSize(bodyLocalW, bodyLocalH)
     this.playerBody.setOffset(
-      ((this.player.width ?? PLAYER_BODY_SIZE) - PLAYER_BODY_SIZE) / 2,
-      ((this.player.height ?? PLAYER_BODY_SIZE) - PLAYER_BODY_SIZE) / 2
+      (localW - bodyLocalW) / 2,
+      localH - bodyLocalH - footInsetLocal
     )
     this.playerBody.setCollideWorldBounds(true) // colide com paredes laterais
     this.highestPlayerY = this.player.y

@@ -1,5 +1,15 @@
 # Highrise — History
 
+## 2026-05-17 — Body positioned at the character's feet (no more knee-deep landings)
+
+- After enlarging the player visual to 112px with a 28-px centered body, the character appeared "sunk" into every step — visual extended 42 px below the body, so the feet rendered well inside the platform.
+- Reframed the body as the character's footprint instead of a centered shape:
+  - `PLAYER_BODY_WIDTH = 40`, `PLAYER_BODY_HEIGHT = 60` (in world pixels)
+  - `PLAYER_BODY_FOOT_INSET = 6` for the empty pixels at the bottom of the sprite frame
+  - Body is centered horizontally but anchored at the bottom of the visual, so the feet visually rest on top of the step.
+- Math handles both sprites and placeholder rectangles by dividing by the GameObject's scale (Arcade's `setSize` takes source/texture units; the body's world size is `source × scale`).
+- Body width 40 still fits inside the smallest level-10 step (50 px wide), so gameplay tightness is unchanged.
+
 ## 2026-05-17 — Pause overlay shows run stats + GameScene grayscale
 
 - PauseScene now displays a five-row recap of the current run (ALTURA, PONTOS, TEMPO, NÍVEL, SUPER) above the RESUME / MENU buttons, instead of just "PAUSED".
