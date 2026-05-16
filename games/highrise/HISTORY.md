@@ -1,5 +1,14 @@
 # Highrise — History
 
+## 2026-05-17 — Adopted the four-file project convention
+
+- Created `PROJECT.md`, `PLAN.md` and `TODO.md` at the game root, alongside the existing `HISTORY.md`, following the global four-file convention.
+- `PROJECT.md` describes what the game is, current status, scope, key context, and how it relates to its sibling `soberba`.
+- `PLAN.md` carries the full Phase 1-6 roadmap as checkboxes, mirroring decisions previously embedded in `HISTORY.md`.
+- `TODO.md` lists in-flight items, recently done work, and items under consideration (notably shipping v1 to Itch.io).
+- All new entries in this `HISTORY.md`, all new code comments and all commit messages will be written in English from this point forward, per global convention.
+- Existing Portuguese entries below are preserved as a historical record and will not be retroactively rewritten.
+
 ## 2026-05-17 — Air control assimétrico (acelerar ≠ inverter)
 
 - Insight do user após 5000: o problema não era responsividade geral, era a velocidade de **inversão de direção**.
