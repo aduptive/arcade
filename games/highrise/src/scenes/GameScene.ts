@@ -6,6 +6,7 @@ const PLATFORM_HEIGHT = 16
 const PLAYER_SIZE = 28
 const JUMP_VELOCITY = -780
 const MOVE_SPEED = 320
+const AIR_ACCEL = 2500 // px/s² — quão rápido você consegue mudar direção no ar
 const DEATH_ZONE_PADDING = 30
 
 // Super jump (Phase 3 — cooldown-based)
@@ -261,9 +262,24 @@ export class GameScene extends Phaser.Scene {
   update(_t: number, dt: number) {
     this.inputMgr.update()
 
-    if (this.inputMgr.isPressed('left')) this.playerBody.setVelocityX(-MOVE_SPEED)
-    else if (this.inputMgr.isPressed('right')) this.playerBody.setVelocityX(MOVE_SPEED)
-    else this.playerBody.setVelocityX(0)
+    // Movimento horizontal:
+    //   - No chão: controle direto e responsivo (zera ao soltar)
+    //   - No ar: preserva momentum; input só ACELERA, não substitui velocidade.
+    //     Soltar a tecla no ar = continua na velocidade que estava.
+    //     Mudar direção no ar = possível, mas com inércia.
+    const onGround = this.playerBody.blocked.down
+    if (onGround) {
+      if (this.inputMgr.isPressed('left')) this.playerBody.setVelocityX(-MOVE_SPEED)
+      else if (this.inputMgr.isPressed('right')) this.playerBody.setVelocityX(MOVE_SPEED)
+      else this.playerBody.setVelocityX(0)
+    } else {
+      const dtSec = Math.min(dt, 100) / 1000
+      let vx = this.playerBody.velocity.x
+      if (this.inputMgr.isPressed('left')) vx -= AIR_ACCEL * dtSec
+      else if (this.inputMgr.isPressed('right')) vx += AIR_ACCEL * dtSec
+      vx = Math.max(-MOVE_SPEED, Math.min(MOVE_SPEED, vx))
+      this.playerBody.setVelocityX(vx)
+    }
 
     // Pulo:
     //   - `up` (seta cima / W / gamepad up/A / tap) = pulo normal

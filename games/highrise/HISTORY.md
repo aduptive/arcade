@@ -1,5 +1,13 @@
 # Highrise — History
 
+## 2026-05-17 — Fix de feel: controle horizontal preserva momentum no ar
+
+- Bug clássico: input horizontal sobrescrevia velocidade direto via `setVelocityX(0)` quando nada estava pressionado, fazendo o player parar bruscamente no ar.
+- Fix: split entre chão e ar.
+  - **No chão:** controle direto e responsivo (mantém o feel atual de chaining de pulos).
+  - **No ar:** input vira aceleração (`AIR_ACCEL = 2500 px/s²`), não substituição. Soltar tecla = continua no momentum. Inverter direção = possível mas com inércia.
+- Velocidade no ar capada em `MOVE_SPEED` (320 px/s) pra arco do pulo continuar previsível.
+
 ## 2026-05-17 — Phase 3 (parte 1): Super pulo com cooldown
 
 - Reformulação da Phase 3: além dos pickups de mundo originalmente planejados, vamos ter também **abilities baseadas em cooldown**. Super pulo é o primeiro.
