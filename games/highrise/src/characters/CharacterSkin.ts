@@ -19,6 +19,7 @@ export type CharacterGameObject =
   | Phaser.GameObjects.Rectangle
   | Phaser.GameObjects.Sprite
   | Phaser.GameObjects.Image
+  | Phaser.GameObjects.Container
 
 /** High-level player state, mapped to an animation by the character skin. */
 export type PlayerState = 'idle' | 'walk' | 'jump' | 'fall' | 'climb'

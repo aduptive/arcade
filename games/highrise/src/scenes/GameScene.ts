@@ -638,20 +638,32 @@ export class GameScene extends Phaser.Scene {
       duration: 300,
       ease: 'Cubic.easeOut',
     })
-    // Brief color shift — implementation differs for rectangle vs sprite/image.
-    const p = this.player as unknown as {
+
+    // Color shift: for Rectangle placeholders we hit `setFillStyle`. For
+    // Sprite/Image we tint directly. For our sprite-via-Container characters
+    // the tint target is the inner Sprite stored under data key 'innerSprite'.
+    const playerAny = this.player as unknown as {
       fillColor?: number
       setFillStyle?: (color: number) => void
       setTint?: (color: number) => void
       clearTint?: () => void
+      getData?: (key: string) => unknown
     }
-    if (typeof p.setFillStyle === 'function' && typeof p.fillColor === 'number') {
-      const originalFill = p.fillColor
-      p.setFillStyle(0x7ad4ff)
-      this.time.delayedCall(180, () => p.setFillStyle?.(originalFill))
-    } else if (typeof p.setTint === 'function') {
-      p.setTint(0x7ad4ff)
-      this.time.delayedCall(180, () => p.clearTint?.())
+
+    if (typeof playerAny.setFillStyle === 'function' && typeof playerAny.fillColor === 'number') {
+      const originalFill = playerAny.fillColor
+      playerAny.setFillStyle(0x7ad4ff)
+      this.time.delayedCall(180, () => playerAny.setFillStyle?.(originalFill))
+      return
+    }
+
+    const inner = playerAny.getData?.('innerSprite') as
+      | { setTint?: (c: number) => void; clearTint?: () => void }
+      | undefined
+    const tintTarget = inner ?? playerAny
+    if (typeof tintTarget.setTint === 'function') {
+      tintTarget.setTint(0x7ad4ff)
+      this.time.delayedCall(180, () => tintTarget.clearTint?.())
     }
   }
 

@@ -11,11 +11,28 @@ import type {
  * Shared helper for building Craftpix-style sprite characters where each
  * animation lives in its own spritesheet (idle/walk/run/jump/climb/...).
  *
- * The three characters (Woodcutter, GraveRobber, SteamMan) ship with the
- * same animation set, so this factory keeps each character file tiny.
+ * The Craftpix character art is not perfectly centered horizontally within
+ * its 48x48 frame — the body sits about 6 source pixels right of center.
+ * That means `setFlipX(true)` would mirror around the frame center, making
+ * the character visually jump left by ~12 source pixels (or ~28 display
+ * pixels at 2.33x scale) every time the player turns around.
+ *
+ * To hide that jump without re-exporting the art, every sprite character is
+ * wrapped in a Phaser Container:
+ *
+ *   - The Container holds the player's logical position and physics body.
+ *   - The Sprite child sits inside, scaled to the requested visual size.
+ *   - When facing right (unflipped), the sprite is shifted LEFT inside the
+ *     container by `artOffsetDisplay` so the character's body lines up with
+ *     the container's center.
+ *   - When facing left (flipped), the sprite is shifted RIGHT by the same
+ *     amount so the mirrored body also lines up with the container's center.
+ *
+ * Net result: the visual position of the character stays exactly put when
+ * flipping — only the orientation changes.
  */
 
-/** Per-animation metadata: which spritesheet key, how many frames, framerate, looping. */
+/** Per-animation metadata: spritesheet key, frame count, framerate, looping. */
 export interface AnimDef {
   key: string
   frames: number
@@ -54,6 +71,13 @@ export const CRAFTPIX_ANIM_DEFS: Record<string, { frames: number; loop: boolean;
 /** Anims actually used by the platformer gameplay; rest are kept available for future use. */
 export const USED_PLAYER_STATES: PlayerState[] = ['idle', 'walk', 'jump', 'climb']
 
+/**
+ * Empirically measured: the Craftpix art's body center sits about 6 source
+ * pixels right of the 48px-frame center. Multiply by (display size / 48) to
+ * get the per-character offset in display pixels.
+ */
+const ART_OFFSET_IN_FRAME = 6
+
 export interface SpriteCharacterConfig {
   id: string
   name: string
@@ -66,31 +90,53 @@ export function createSpriteCharacter(cfg: SpriteCharacterConfig): CharacterSkin
     id: cfg.id,
     name: cfg.name,
     paintCharacter: ({ scene, x, y, size }: CharacterPaintArgs): CharacterGameObject => {
+      const container = scene.add.container(x, y)
+      container.setSize(size, size)
+
       const idleKey = animKey(cfg.basename, 'idle')
-      const sprite = scene.add.sprite(x, y, idleKey, 0)
+      const sprite = scene.add.sprite(0, 0, idleKey, 0)
       sprite.setScale(size / 48)
       sprite.play(idleKey)
-      sprite.setData('basename', cfg.basename)
-      sprite.setData('currentState', 'idle')
-      return sprite
+      container.add(sprite)
+
+      const artOffsetDisplay = ART_OFFSET_IN_FRAME * (size / 48)
+      // Default facing is right (unflipped) — shift sprite LEFT by the offset
+      // so the character's body lines up with the container's center.
+      sprite.x = -artOffsetDisplay
+
+      container.setData('basename', cfg.basename)
+      container.setData('innerSprite', sprite)
+      container.setData('currentState', 'idle')
+      container.setData('artOffsetDisplay', artOffsetDisplay)
+
+      return container as unknown as CharacterGameObject
     },
     updateAnimation: ({ gameObject, state, facing }: CharacterUpdateArgs) => {
-      const sprite = gameObject as Phaser.GameObjects.Sprite
-      if (!('play' in sprite) || typeof sprite.play !== 'function') return
-      const basename = sprite.getData('basename') as string | undefined
+      const container = gameObject as unknown as Phaser.GameObjects.Container
+      const sprite = container.getData('innerSprite') as Phaser.GameObjects.Sprite | undefined
+      if (!sprite) return
+
+      const basename = container.getData('basename') as string | undefined
       if (!basename) return
 
-      const previous = sprite.getData('currentState') as PlayerState | undefined
+      const previous = container.getData('currentState') as PlayerState | undefined
       if (previous !== state) {
         const targetKey = animKey(basename, STATE_TO_ANIM[state])
         if (sprite.scene?.anims?.exists?.(targetKey)) {
           sprite.play(targetKey, true)
-          sprite.setData('currentState', state)
+          container.setData('currentState', state)
         }
       }
 
-      if (facing === -1) sprite.setFlipX(true)
-      else if (facing === 1) sprite.setFlipX(false)
+      const artOffsetDisplay = (container.getData('artOffsetDisplay') as number) ?? 0
+      if (facing === -1) {
+        sprite.setFlipX(true)
+        sprite.x = artOffsetDisplay // mirror: shift right by the offset
+      } else if (facing === 1) {
+        sprite.setFlipX(false)
+        sprite.x = -artOffsetDisplay // unflipped: shift left by the offset
+      }
+      // facing === 0: leave whatever flip / offset is currently applied
     },
   }
 }

@@ -1,5 +1,15 @@
 # Highrise — History
 
+## 2026-05-17 — Fix: sprite no longer "jumps" position when flipping facing
+
+- User confirmed via side-by-side screenshots that flipping the character left/right visually shifted the sprite ~14 display pixels even though the physics body stayed put. The Craftpix art has the character's body about 6 source pixels right of center within its 48x48 frame, and `setFlipX(true)` mirrors around the frame center.
+- Wrapped sprite characters in a Phaser Container. Container holds the logical position and physics body; the inner Sprite sits at a flip-aware horizontal offset that exactly cancels the art's off-center placement.
+  - Facing right (unflipped): inner sprite shifted LEFT by `ART_OFFSET_IN_FRAME × scale` so the body aligns with the container center.
+  - Facing left (flipped): inner sprite shifted RIGHT by the same amount.
+- Net effect: the character's visible body sits at the container's center regardless of facing — the flip is purely an orientation change, no horizontal shift.
+- `CharacterGameObject` type now includes `Container`. `flashSuperUsed` reaches into the container's `innerSprite` data slot to apply / clear the tint.
+- Rectangle placeholder characters (default, climber, capivara) are unaffected.
+
 ## 2026-05-17 — Dev affordance: `?level=N` URL param starts at difficulty N
 
 - Used `?level=9` in the URL to drop straight into level-9 difficulty without grinding from the bottom — handy for testing balance, spawn density and the new sprite animations at higher level.
