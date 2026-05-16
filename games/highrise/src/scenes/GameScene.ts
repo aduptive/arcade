@@ -9,6 +9,10 @@ const JUMP_VELOCITY = -780
 const MOVE_SPEED = 320
 const PLATFORM_VERTICAL_GAP = 110
 
+// Phase 1: pressão do auto-scroll. Vai escalar por nível na Phase 2.
+const AUTO_SCROLL_SPEED = 30 // px/segundo
+const DEATH_ZONE_PADDING = 30 // distância abaixo da câmera = morte
+
 export class GameScene extends Phaser.Scene {
   private inputMgr!: InputManager
   private player!: Phaser.GameObjects.Rectangle
@@ -97,7 +101,7 @@ export class GameScene extends Phaser.Scene {
     this.scoreText.setShadow(2, 2, '#000', 0, true, true)
   }
 
-  update() {
+  update(_t: number, dt: number) {
     this.inputMgr.update()
 
     if (this.inputMgr.isPressed('left')) this.playerBody.setVelocityX(-MOVE_SPEED)
@@ -113,10 +117,15 @@ export class GameScene extends Phaser.Scene {
     if (this.player.x < -PLAYER_SIZE / 2) this.player.x = GAME_WIDTH + PLAYER_SIZE / 2
     if (this.player.x > GAME_WIDTH + PLAYER_SIZE / 2) this.player.x = -PLAYER_SIZE / 2
 
-    // câmera só sobe (nunca desce)
+    // ---- Câmera: auto-scroll híbrido ----
+    // (1) sempre sobe num ritmo mínimo (pressão do nível)
+    // (2) também segue o player pra cima se ele estiver subindo mais rápido
+    // Câmera nunca desce.
     const cam = this.cameras.main
-    const targetY = this.player.y - GAME_HEIGHT * 0.6
-    if (targetY < cam.scrollY) cam.scrollY = targetY
+    const dtSec = Math.min(dt, 100) / 1000 // cap pra evitar pulo gigante em tab switch
+    const playerTarget = this.player.y - GAME_HEIGHT * 0.6
+    const autoScrollTarget = cam.scrollY - AUTO_SCROLL_SPEED * dtSec
+    cam.scrollY = Math.min(cam.scrollY, playerTarget, autoScrollTarget)
 
     // score = quão alto chegou
     if (this.player.y < this.highestPlayerY) {
@@ -125,15 +134,16 @@ export class GameScene extends Phaser.Scene {
       this.scoreText.setText(`ALTURA: ${Math.max(0, this.score)}m`)
     }
 
-    // spawnar mais plataformas acima conforme sobe
+    // spawnar mais steps acima conforme sobe
     while (this.highestPlatformY > cam.scrollY - 200) {
       this.highestPlatformY -= PLATFORM_VERTICAL_GAP
       const x = Phaser.Math.Between(PLATFORM_WIDTH / 2 + 10, GAME_WIDTH - PLATFORM_WIDTH / 2 - 10)
       this.addPlatform(x, this.highestPlatformY)
     }
 
-    // game over: caiu pra fora da tela
-    if (this.player.y > cam.scrollY + GAME_HEIGHT + 100) {
+    // ---- Game over ----
+    // Player caiu fora da tela OU foi engolido pelo auto-scroll por baixo.
+    if (this.player.y > cam.scrollY + GAME_HEIGHT + DEATH_ZONE_PADDING) {
       this.scene.start('GameOverScene', { score: Math.max(0, this.score) })
     }
   }
