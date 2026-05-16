@@ -171,6 +171,12 @@ export class GameScene extends Phaser.Scene {
     // paused). From the pause overlay the player can resume or jump to menu.
     // Mobile users get the same flow via the HUD pause button.
     this.input.keyboard?.on('keydown-ESC', () => this.openPause())
+
+    // When the scene comes back from pause, drop the grayscale post-FX so
+    // gameplay resumes with full color.
+    this.events.on(Phaser.Scenes.Events.RESUME, () => {
+      this.cameras.main.postFX?.clear()
+    })
   }
 
   private spawnInitialPlatforms() {
@@ -345,10 +351,18 @@ export class GameScene extends Phaser.Scene {
 
   private openPause() {
     if (this.scene.isPaused()) return
+    // Desaturate the underlying frame so the paused snapshot reads as a
+    // black-and-white freeze behind the overlay. PostFX is cleared on resume.
+    this.cameras.main.postFX?.addColorMatrix().grayscale()
     this.scene.pause()
     this.scene.launch('PauseScene', {
       mapId: this.mapTheme.id,
       characterId: this.characterSkin.id,
+      score: Math.max(0, this.score),
+      points: this.points,
+      timeMs: this.elapsedMs,
+      level: this.currentLevel,
+      superCharges: this.superJumpCharges,
     })
   }
 

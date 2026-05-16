@@ -14,7 +14,8 @@
     "baseUrl": ".",
     "paths": {
       "@shared/*": ["./shared/*"]
-    }
+    },
+    "types": ["vite/client"]
   },
   "include": ["shared", "games", "vite.config.ts"]
 }

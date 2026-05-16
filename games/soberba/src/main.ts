@@ -29,4 +29,16 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [BootScene, GameScene, GameOverScene],
 }
 
-new Phaser.Game(config)
+const game = new Phaser.Game(config)
+
+// HMR safety: destroy the old Phaser game instance and force a full reload
+// on any module change. Phaser holds a live canvas + WebGL context that
+// doesn't survive hot-swap cleanly.
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    game.destroy(true)
+  })
+  import.meta.hot.accept(() => {
+    window.location.reload()
+  })
+}

@@ -1,5 +1,20 @@
 # Highrise — History
 
+## 2026-05-17 — Pause overlay shows run stats + GameScene grayscale
+
+- PauseScene now displays a five-row recap of the current run (ALTURA, PONTOS, TEMPO, NÍVEL, SUPER) above the RESUME / MENU buttons, instead of just "PAUSED".
+- GameScene applies a `ColorMatrix.grayscale()` post-FX to its camera when openPause runs, and clears it on the scene `RESUME` event. The frozen frame behind the overlay reads as a black-and-white snapshot of the moment of pause.
+- If the player picks MENU instead of RESUME, PauseScene also clears the post-FX defensively so a future run on the same map doesn't start grayscaled.
+
+## 2026-05-17 — HMR hardening: destroy Phaser game + full reload on module change
+
+- Reported issue: editing source files left the dev server running but the page broken / requiring a manual server restart.
+- Root cause: Vite was hot-replacing modules without destroying the previous `Phaser.Game` instance. Phaser holds a live `<canvas>` + WebGL context that doesn't survive hot-swap; the page ends up with stale listeners or a duplicate game.
+- Fix in both `games/highrise/src/main.ts` and `games/soberba/src/main.ts`:
+  - `import.meta.hot.dispose(() => game.destroy(true))` tears down the old game when the module is replaced.
+  - `import.meta.hot.accept(() => window.location.reload())` forces a full reload on any module update — slightly slower than ideal HMR, but reliable for Phaser-shaped state.
+- Added `"types": ["vite/client"]` to `tsconfig.json` so `import.meta.hot` typechecks.
+
 ## 2026-05-17 — Pause: ESC now pauses; HUD pause button; PauseScene overlay
 
 - ESC used to bail straight to the main menu without saving the run state — too aggressive. Now ESC pauses the game and overlays a `PauseScene` with RESUME / MENU buttons.

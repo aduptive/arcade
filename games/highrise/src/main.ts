@@ -55,4 +55,17 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [BootScene, MenuScene, GameScene, GameOverScene, PauseScene],
 }
 
-new Phaser.Game(config)
+const game = new Phaser.Game(config)
+
+// HMR safety: Phaser keeps a live canvas + WebGL context. If Vite hot-swaps
+// a module without destroying the old game instance, the page either freezes
+// or accumulates duplicate canvases. We force a full reload on any change in
+// dev — slower than ideal HMR, but reliable for Phaser-shaped state.
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    game.destroy(true)
+  })
+  import.meta.hot.accept(() => {
+    window.location.reload()
+  })
+}
