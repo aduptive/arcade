@@ -1,5 +1,19 @@
 # Highrise — History
 
+## 2026-05-16 — Phase 2: curva de dificuldade por altura
+
+- `getLevelConfig(heightM)` deriva 3 parâmetros que escalam com a altura: `stepWidth`, `verticalGap`, `scrollSpeed`. Interpolação **contínua** (linear) entre nível 1 (heightM = 0) e máximo (heightM = 500).
+- Curvas:
+  - `stepWidth`: 96 → 50px
+  - `verticalGap`: 110 → 125px (range pequeno por causa da física do pulo, não dá pra exigir gap maior que o pulo alcança)
+  - `scrollSpeed`: 30 → 85 px/s (~2.8× mais rápido)
+- Display de "nível" é discreto (1-10), incrementa a cada 50m de altura, capa em 10. O número serve só pra HUD e flash visual; a config interpola por trás suavemente.
+- Steps já existentes não mudam — só os novos usam a config corrente.
+- Flash "NÍVEL X" no centro da tela quando incrementa, com tween scale + alpha (Back.easeOut na entrada, fade-out na saída).
+- HUD: `NÍVEL X` sutil em dourado abaixo do `ALTURA`.
+- **Decisão de tuning:** preservei o nível 1 = setup original (96/110/30) porque o user acabou de aprovar o feel daquilo. Phase 2 só ESCALA a partir disso, não altera o estado inicial.
+- **Trivia:** Icy Tower original anuncia volta na Steam pra 2026 (Win/Mac). Não muda estratégia — competimos em mercado diferente (web portal vs Steam core).
+
 ## 2026-05-16 — Trigger do auto-scroll: pouso real, não decolagem
 
 - Antes: auto-scroll disparava quando `player.y < startY - 50` — ativava no ar durante o primeiro pulo, antes de pousar.
