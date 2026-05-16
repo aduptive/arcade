@@ -1,5 +1,12 @@
 # Highrise — History
 
+## 2026-05-17 — Ground movement now acceleration-based (brief taps barely move)
+
+- Reported regression after the body widened to 40px: when standing near the edge of a narrow step, a quick direction tap could slide the player off because horizontal velocity was set instantly to ±320 px/s on key press.
+- Replaced instant velocity on the ground with acceleration: `GROUND_ACCEL = 1800 px/s^2` from rest, `GROUND_DECEL_REVERSE = 3000 px/s^2` when input opposes motion, `GROUND_FRICTION = 4000 px/s^2` when no input.
+- Result: a ~16ms tap moves the player < 1px (essentially flips facing); 100ms press moves ~10px; held key still hits MAX in ~180ms. Direction switching near edges no longer drops the player off the step.
+- Air control unchanged.
+
 ## 2026-05-17 — Body positioned at the character's feet (no more knee-deep landings)
 
 - After enlarging the player visual to 112px with a 28-px centered body, the character appeared "sunk" into every step — visual extended 42 px below the body, so the feet rendered well inside the platform.

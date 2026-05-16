@@ -40,6 +40,17 @@ const PLAYER_BODY_HEIGHT = 60
 const PLAYER_BODY_FOOT_INSET = 6
 const JUMP_VELOCITY = -780
 const GROUND_MAX_SPEED = 320 // max horizontal speed on the ground (responsive)
+/**
+ * Ground horizontal acceleration. With this in place, briefly tapping a
+ * direction key only nudges the player a few pixels — enough to flip facing
+ * but not enough to slide off a narrow step. Holding the key still ramps up
+ * to GROUND_MAX_SPEED quickly.
+ */
+const GROUND_ACCEL = 1800 // px/s^2 — from rest toward MAX in the held direction
+/** Reversing direction on the ground feels snappier than starting from rest. */
+const GROUND_DECEL_REVERSE = 3000 // px/s^2 — when input opposes current motion
+/** Aggressive friction on the ground when no input — so taps decay fast. */
+const GROUND_FRICTION = 4000 // px/s^2 — decay applied when no horizontal input
 const AIR_MAX_SPEED = 320 // max horizontal speed in the air (matches ground so launch velocity carries)
 // Icy-Tower-style air control: ground velocity is the real resource, air input
 // only nudges. Players are rewarded for committing on the ground before takeoff.
@@ -652,18 +663,33 @@ export class GameScene extends Phaser.Scene {
   update(_t: number, dt: number) {
     this.inputMgr.update()
 
-    // Movimento horizontal:
-    //   - No chão: controle direto e responsivo (zera ao soltar)
-    //   - No ar: preserva momentum; input só ACELERA, não substitui velocidade.
-    //     Soltar a tecla no ar = continua na velocidade que estava.
-    //     Mudar direção no ar = possível, mas com inércia.
+    // Horizontal movement:
+    //   - On ground: acceleration-based. Brief taps barely move the player
+    //     (so a quick direction change near a step edge doesn't slide them
+    //     off), while holding ramps up to GROUND_MAX_SPEED quickly. Friction
+    //     when no input is held returns the player to rest fast.
+    //   - In air: preserves momentum; input only accelerates, never replaces
+    //     velocity. Releasing the key in mid-air keeps the launched motion.
     const onGround = this.playerBody.blocked.down
+    const dtSec = Math.min(dt, 100) / 1000
     if (onGround) {
-      if (this.inputMgr.isPressed('left')) this.playerBody.setVelocityX(-GROUND_MAX_SPEED)
-      else if (this.inputMgr.isPressed('right')) this.playerBody.setVelocityX(GROUND_MAX_SPEED)
-      else this.playerBody.setVelocityX(0)
+      let vx = this.playerBody.velocity.x
+      const wantsLeft = this.inputMgr.isPressed('left')
+      const wantsRight = this.inputMgr.isPressed('right')
+      if (wantsLeft) {
+        const accel = vx > 0 ? GROUND_DECEL_REVERSE : GROUND_ACCEL
+        vx -= accel * dtSec
+      } else if (wantsRight) {
+        const accel = vx < 0 ? GROUND_DECEL_REVERSE : GROUND_ACCEL
+        vx += accel * dtSec
+      } else {
+        const friction = GROUND_FRICTION * dtSec
+        if (Math.abs(vx) <= friction) vx = 0
+        else vx -= Math.sign(vx) * friction
+      }
+      vx = Math.max(-GROUND_MAX_SPEED, Math.min(GROUND_MAX_SPEED, vx))
+      this.playerBody.setVelocityX(vx)
     } else {
-      const dtSec = Math.min(dt, 100) / 1000
       let vx = this.playerBody.velocity.x
       const wantsLeft = this.inputMgr.isPressed('left')
       const wantsRight = this.inputMgr.isPressed('right')
@@ -759,7 +785,6 @@ export class GameScene extends Phaser.Scene {
     // (2) também segue o player pra cima se ele estiver subindo mais rápido
     // Câmera nunca desce.
     const cam = this.cameras.main
-    const dtSec = Math.min(dt, 100) / 1000 // cap pra evitar pulo gigante em tab switch
     const playerTarget = this.player.y - GAME_HEIGHT * 0.6
     if (this.autoScrollActive) {
       const autoScrollTarget = cam.scrollY - cfg.scrollSpeed * dtSec
