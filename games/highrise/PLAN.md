@@ -44,15 +44,60 @@
 - [ ] Hall of Fame screen accessible from main menu and game over
 - [ ] Optional name entry on a new high score
 
-## Phase 6 — Visual identity ("the dress")
+## Phase 6 — Multi-map / Crazy Climber architecture
 
-- [ ] Player sprite with idle, jump and fall animations
-- [ ] Per-level step theme variations
-- [ ] Background with parallax layers
+This phase is a strategic pivot: instead of committing to a single visual identity, the game becomes a Crazy Climber-style platform with multiple selectable maps and characters. Each map's "step" is thematic architecture (favela rooftops, NY window ledges, gargoyles, etc.).
+
+### Architecture (foundation)
+
+- [ ] Extract `MapTheme` config type: palette, BG layers, step style and detail (rooftop / window / branch / etc.), pickup theming, music, narrative flair
+- [ ] Extract `CharacterSkin` config type: sprite, animation set; same physics across all characters
+- [ ] `MenuScene` for map and character selection
+- [ ] `GameScene` becomes generic, parameterized by the active map and character
+
+### First map: Favela
+
+- [ ] Step = colored rooftop with small detail (water tank, clothesline, antenna, satellite dish)
+- [ ] BG layers: hills, power lines crossing the sky, Cristo Redentor distant on the horizon
+- [ ] Palette: warm tropical (rosa, amarelo, ciano, verde-folha)
+- [ ] Themed pickups: açaí (coin), guaraná (super), folha (lunar), saquinho (mystery)
+- [ ] Music: funk melódico / samba (placeholder until commissioned)
+
+### First character: generic climber
+
+- [ ] Faceless climber sprite (gender-ambiguous, helmet + backpack) as default
+- [ ] Idle / jump / fall animation frames (or static sprite for v1)
+
+### Subsequent maps (future content drops)
+
+Ranked rough order of appeal:
+
+- [ ] NY skyscraper — step = window ledge with AC unit, classic Crazy Climber homage
+- [ ] Pão de Açúcar — step = granite outcrop, Rio scenery
+- [ ] Inferno — step = giant skull / demon rib, lava below (resurrects single-theme proposal #2)
+- [ ] Submarino — step = shipwreck debris / coral, octopus character (resurrects proposal #13)
+- [ ] Floresta Atlântica — step = tree branch with fruits, sagui character
+- [ ] Catedral Gótica — step = gargoyle
+- [ ] Babel — step = ancient stone block with runes
+- [ ] Tokyo Tower — step = red steel girder
+- [ ] Pirâmide Egípcia — step = carved stone block
+
+### Subsequent characters (future content drops)
+
+- [ ] Capivara
+- [ ] Cat
+- [ ] Italian alpinist (Marco)
+- [ ] Astronaut
+- [ ] Capeta
+- [ ] Soul / ghost
+- [ ] Painter
+
+### Juice and audio (kept from original Phase 6)
+
 - [ ] Particles (jump dust, combo sparkles, death explosion)
 - [ ] Screen shake on impact and combo break
 - [ ] Sound effects (jump, land, pickup, combo, death)
-- [ ] Background music
+- [ ] Background music (per-map)
 
 ## Open questions
 

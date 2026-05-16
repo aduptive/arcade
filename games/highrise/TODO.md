@@ -2,11 +2,13 @@
 
 ## In flight
 
-- [ ] Validate the new pickup system end-to-end (spawning, collection, effects, HUD, mystery box outcomes)
-- [ ] Tune pickup spawn chance (currently 15% per step) and the mystery box distribution after a few runs
-- [ ] Validate the dynamic canvas size and smooth rendering on the user's screen
+- [ ] **Next session, big one:** refactor to multi-map architecture (`MapTheme`, `CharacterSkin`, `MenuScene`, generic `GameScene`)
+- [ ] First map after refactor: Favela (steps = colored rooftops with details, BG with Cristo + power lines, funk/samba placeholder music)
+- [ ] First character after refactor: generic climber (faceless, helmet + backpack)
+- [ ] Validate the new pickup system, super-jump boost, and drop-through together after a few runs
+- [ ] Tune pickup spawn chance (15% per step) and the mystery-box outcome distribution
 - [ ] Decide whether to also add the Icy Tower jump-HEIGHT bonus from horizontal speed
-- [ ] When/if we want to allow wider canvases (>600), implement a spawn-aware step generator that respects max jump distance from the previous step
+- [ ] Sustained super-jump boost: validate that 2s and 20% gravity feels right (vs alternatives like 3s @ 30% or 1.5s @ 10%)
 
 ## Recently done
 

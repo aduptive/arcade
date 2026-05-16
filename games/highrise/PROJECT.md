@@ -6,7 +6,7 @@ Vertical-scroll jumper inspired by Icy Tower and Doodle Jump. Single-player, sco
 
 ## Current status
 
-Active development. Phase 3 in progress — first cooldown-based ability (super jump) shipped, air-control physics tuned. Core gameplay loop fully functional.
+Active development. Phase 3 essentially done (super jump, air physics tuned, world pickups, drop-through). Next phase is a strategic pivot: instead of locking into a single visual identity, the game becomes a Crazy Climber-style multi-map platform where each map's "step" is thematic architecture (favela rooftops, NY window ledges, gargoyles, etc.). First map: Favela.
 
 ## Scope
 

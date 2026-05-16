@@ -1,5 +1,18 @@
 # Highrise — History
 
+## 2026-05-17 — Strategic pivot: Crazy-Climber multi-map model with thematic steps
+
+- Long brainstorm on the visual/narrative direction ("the dress"). After surveying ~15 single-theme proposals (alpinist, devil, dinosaur, Babel, cat, hacker, soul, capybara, steampunk, DJ, painter, octopus, pizzaiolo, AI, etc.), the user proposed a fundamentally better framing: a **Crazy Climber-style multi-map game** with selectable characters.
+- Key insight (user-originated): **each step IS thematic architecture** — favela = colored rooftops with water tanks and clotheslines; NY = window ledges with AC units; forest = tree branches with fruits; cathedral = gargoyles; etc. This is what separates the game visually from a generic Doodle Jump clone.
+- All earlier single-theme proposals are preserved as future maps, not abandoned: Inferno, Babel, Submarino (octopus), Jurassic (dinosaur), Catnip (cat), 404 (hacker), Saudades (soul) all naturally become maps inside the new framework.
+- Architecture direction agreed:
+  - `MapTheme` config object (palette, BG layers, step style, music, pickup themes, narrative flair)
+  - `CharacterSkin` config object (sprite, anim set; same physics across all)
+  - `MenuScene` for map + character selection
+  - `GameScene` becomes generic, parameterized by the active map and character
+- Build plan: refactor first to multi-map architecture, then ship one polished map + one polished character (Favela + climber/capivara), and add maps as ongoing content from there.
+- First map chosen: **Favela** — each step is a colored rooftop. Reason: visually iconic in a single frame, strong cultural differentiator in a market dominated by generic European/Asian themes, low ambiguity about what the game is.
+
 ## 2026-05-17 — Super jump becomes a sustained boost + drop-through with `down`
 
 - User feedback: the super jump should feel like a force that lasts a couple of seconds, not just a higher instantaneous impulse.
