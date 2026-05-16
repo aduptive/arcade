@@ -72,23 +72,32 @@ export const CRAFTPIX_ANIM_DEFS: Record<string, { frames: number; loop: boolean;
 export const USED_PLAYER_STATES: PlayerState[] = ['idle', 'walk', 'jump', 'climb']
 
 /**
- * After inspecting the actual sprite files, the character BODY is essentially
- * centered in its 48px frame for all three characters. The visual shift we
- * see on flip comes mostly from the asymmetric tool (axe/wrench/etc.)
- * swinging to the opposite side — that's inherent to the art and cannot be
- * compensated without re-drawing it. We leave the offset at 0 and only the
- * tool visibly swaps sides, which is normal platformer behavior.
+ * Each character has the body drawn at a slightly different horizontal
+ * position within its 48px frame. The default of 0 means the body is
+ * assumed to be at the frame's exact center. A NEGATIVE value means the
+ * body sits LEFT of frame center (so when flipping, we shift the sprite
+ * RIGHT to keep the body centered on the container). A POSITIVE value
+ * means the body sits RIGHT of frame center. Values are tuned empirically
+ * per character — see each character file's `artOffsetInFrame` override.
  */
-const ART_OFFSET_IN_FRAME = 0
+const DEFAULT_ART_OFFSET_IN_FRAME = 0
 
 export interface SpriteCharacterConfig {
   id: string
   name: string
   /** Base name used in file paths and animation keys (e.g. 'Woodcutter'). */
   basename: string
+  /**
+   * Per-character body offset within the 48px source frame. Negative if the
+   * character body sits left of frame center, positive if right. Defaults
+   * to 0 (body assumed centered). Tune by watching the on-character debug
+   * crosshair: the body should sit on the crosshair regardless of facing.
+   */
+  artOffsetInFrame?: number
 }
 
 export function createSpriteCharacter(cfg: SpriteCharacterConfig): CharacterSkin {
+  const offsetInFrame = cfg.artOffsetInFrame ?? DEFAULT_ART_OFFSET_IN_FRAME
   return {
     id: cfg.id,
     name: cfg.name,
@@ -102,7 +111,10 @@ export function createSpriteCharacter(cfg: SpriteCharacterConfig): CharacterSkin
       sprite.play(idleKey)
       container.add(sprite)
 
-      const artOffsetDisplay = ART_OFFSET_IN_FRAME * (size / 48)
+      const artOffsetDisplay = offsetInFrame * (size / 48)
+      // Initial facing = right (unflipped). Shift to compensate for body
+      // offset within the frame so the character body lands on the
+      // container center regardless of which direction it's facing.
       sprite.x = -artOffsetDisplay
 
       // ---- DEBUG OUTLINES ----
