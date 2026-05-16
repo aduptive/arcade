@@ -21,6 +21,13 @@ export const arboreaMap: MapTheme = {
   backgroundColor: 0x1a2e1a,
   hudAccent: '#e8f5d8',
   flashAccent: '#a3d76b',
+  // Forest-themed pickups: jabuticaba (coin) / mel (super) / folha (lunar) / pinha (?)
+  pickupTheme: {
+    coin: { fillColor: 0x3a1a2e, strokeColor: 0x1a0a18, label: 'J', labelColor: '#e8a5c4' }, // jabuticaba
+    super: { fillColor: 0xf5b94a, strokeColor: 0x8a5a14, label: 'M' }, // mel
+    lunar: { fillColor: 0x6da053, strokeColor: 0x2a4218, label: 'F' }, // folha
+    mystery: { fillColor: 0x8a6a3a, strokeColor: 0x3a2a14, label: '?', labelColor: '#f5e6c4' }, // pinha
+  },
 
   paintBackground: ({ scene, width, height }) => {
     // Sky gradient: light forest dawn at top, deep emerald at bottom

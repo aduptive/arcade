@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import type { PickupThemeOverride } from '../game/Pickup'
 
 /**
  * A MapTheme bundles everything that defines the look and feel of a single
@@ -79,4 +80,10 @@ export interface MapTheme {
   hudAccent?: string
   /** Optional accent color for level-up flash and other transient UI. Defaults to orange. */
   flashAccent?: string
+  /**
+   * Optional re-skin of the four pickup types (colors and single-glyph
+   * label). Mechanics stay the same; only the visuals change. Maps that
+   * don't supply this use the default colors and no label.
+   */
+  pickupTheme?: PickupThemeOverride
 }

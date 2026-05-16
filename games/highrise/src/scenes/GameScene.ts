@@ -262,7 +262,8 @@ export class GameScene extends Phaser.Scene {
   private maybeSpawnPickupAbove(x: number, y: number) {
     if (Math.random() > PICKUP_SPAWN_CHANCE) return
     const type = randomPickupType()
-    const pickup = createPickup(this, x, y - PICKUP_HOVER_OFFSET, type)
+    const themeOverride = this.mapTheme.pickupTheme?.[type]
+    const pickup = createPickup(this, x, y - PICKUP_HOVER_OFFSET, type, themeOverride)
     this.pickups.add(pickup)
   }
 

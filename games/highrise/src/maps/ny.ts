@@ -21,6 +21,13 @@ export const nyMap: MapTheme = {
   backgroundColor: 0x0a0f24,
   hudAccent: '#fff7c4',
   flashAccent: '#ffd93d',
+  // NY pickups: bagel (coin) / coffee (super) / donut (lunar) / pretzel (?)
+  pickupTheme: {
+    coin: { fillColor: 0xd9a86b, strokeColor: 0x6b4a2a, label: 'B' }, // bagel
+    super: { fillColor: 0x8b5a3c, strokeColor: 0x3a2410, label: 'C', labelColor: '#fff7c4' }, // coffee
+    lunar: { fillColor: 0xf2b6c1, strokeColor: 0x8a4256, label: 'D' }, // donut
+    mystery: { fillColor: 0xe6c98a, strokeColor: 0x7a5a2a, label: '?' }, // pretzel
+  },
 
   paintBackground: ({ scene, width, height }) => {
     // Solid dark blue
