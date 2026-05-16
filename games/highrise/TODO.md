@@ -2,16 +2,19 @@
 
 ## In flight
 
-- [ ] Validate the new Icy-Tower-style air control (ground velocity carries, air input is minor: AIR_MAX_SPEED 320, AIR_ACCEL_SAME 1200, AIR_ACCEL_REVERSE 2500, AIR_DRAG 400)
-- [x] ~~Decide whether the 320 → 240 speed cap drop on takeoff feels jarring~~ — moot, removed the cap mismatch
-- [ ] Decide whether to also add the Icy Tower jump-HEIGHT bonus from horizontal speed (separate from lateral carryover)
-- [ ] Pick the next Phase 3 ability: double jump vs shield vs world pickups
+- [x] Validate the new Icy-Tower-style air control — confirmed great by the user (reached level 9)
+- [ ] Implement world pickups (gems) for bonus points — next up
+- [ ] Validate the dedicated-super-jump input model (action = super-only, no normal-jump fallback)
+- [ ] Decide whether to also add the Icy Tower jump-HEIGHT bonus from horizontal speed
 
 ## Recently done
 
+- [x] Make `action` a dedicated super-jump input (no normal-jump fallback)
+- [x] Icy-Tower-style air control: ground velocity carries into the air, air input is small
+- [x] Air drag for fine-tap precision
 - [x] Adopt the four-file project convention (PROJECT, PLAN, TODO, HISTORY)
 - [x] Tune AIR_ACCEL_REVERSE up to 10000 for fast direction inversion in the air
-- [x] Split ground vs air max horizontal speed (320 / 240)
+- [x] Split ground vs air max horizontal speed
 - [x] Asymmetric air acceleration: same direction fast, reverse direction tunable
 - [x] Air control preserves horizontal momentum when input is released
 - [x] Super jump ability: 1.5× velocity, 60s charge, max 3 charges

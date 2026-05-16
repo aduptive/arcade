@@ -301,19 +301,17 @@ export class GameScene extends Phaser.Scene {
       this.playerBody.setVelocityX(vx)
     }
 
-    // Pulo:
-    //   - `up` (seta cima / W / gamepad up/A / tap) = pulo normal
-    //   - `action` (espaço / gamepad B / swipe down) = super pulo (consome 1 carga)
-    //     se não tiver carga, cai como pulo normal pra não ser tecla "morta"
+    // Jump:
+    //   - `up` (arrow up / W / gamepad up or A / tap) = always normal jump
+    //   - `action` (space / gamepad B / swipe down) = dedicated super jump:
+    //     consumes 1 charge if available; does nothing when out of charges.
+    //   No fallback from action to normal jump: the whole point is that the
+    //   super jump is an explicit, separate choice from the regular one.
     if (this.playerBody.blocked.down) {
-      if (this.inputMgr.justPressed('action')) {
-        if (this.superJumpCharges > 0) {
-          this.playerBody.setVelocityY(JUMP_VELOCITY * SUPER_JUMP_MULTIPLIER)
-          this.superJumpCharges--
-          this.flashSuperUsed()
-        } else {
-          this.playerBody.setVelocityY(JUMP_VELOCITY)
-        }
+      if (this.inputMgr.justPressed('action') && this.superJumpCharges > 0) {
+        this.playerBody.setVelocityY(JUMP_VELOCITY * SUPER_JUMP_MULTIPLIER)
+        this.superJumpCharges--
+        this.flashSuperUsed()
       } else if (this.inputMgr.justPressed('up')) {
         this.playerBody.setVelocityY(JUMP_VELOCITY)
       }

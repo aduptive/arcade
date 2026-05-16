@@ -1,5 +1,12 @@
 # Highrise — History
 
+## 2026-05-17 — Super jump is now a dedicated, exclusive input
+
+- User feedback: super jump was firing on any `action` press whenever a charge was available, with no way to choose a regular jump using that same key. They wanted the super jump to be an explicit choice.
+- Changed the jump logic so `action` (space / gamepad B / swipe down) now triggers super jump exclusively when a charge is available, and does nothing when out of charges. The previous fallback to a normal jump was removed.
+- `up` (arrow up / W / gamepad up or A / tap) remains the always-normal jump. There are still 4 inputs for normal jump and 1 dedicated input for super, so no functionality is lost.
+- Considered double-tap of `action` as the trigger (per the user's suggestion) but rejected for v1: it would introduce input lag in a platformer where every frame of jump responsiveness matters. Easy to revisit if the dedicated-button approach feels off.
+
 ## 2026-05-17 — Icy-Tower-style air control: launch velocity is the resource
 
 - User design proposal: ground velocity should be the primary commitment; air input should only nudge, not steer.
