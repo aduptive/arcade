@@ -100,12 +100,31 @@ export function createSpriteCharacter(cfg: SpriteCharacterConfig): CharacterSkin
       container.add(sprite)
 
       const artOffsetDisplay = ART_OFFSET_IN_FRAME * (size / 48)
-      // Default facing is right (unflipped) — shift sprite LEFT by the offset
-      // so the character's body lines up with the container's center.
       sprite.x = -artOffsetDisplay
+
+      // ---- DEBUG OUTLINES ----
+      // White rectangle = container area (where the logical body lives).
+      // Red rectangle = sprite frame at its current offset (so we can see if
+      // it actually shifts when flipping).
+      // Cyan crosshair = container's exact center (sprite.x = 0 reference).
+      const containerOutline = scene.add.rectangle(0, 0, size, size)
+      containerOutline.setStrokeStyle(2, 0xffffff, 0.85)
+      container.add(containerOutline)
+
+      const spriteOutline = scene.add.rectangle(sprite.x, 0, size, size)
+      spriteOutline.setStrokeStyle(2, 0xff3030, 0.95)
+      container.add(spriteOutline)
+
+      const crosshair = scene.add.graphics()
+      crosshair.lineStyle(1, 0x00ffff, 1)
+      crosshair.lineBetween(-10, 0, 10, 0)
+      crosshair.lineBetween(0, -10, 0, 10)
+      container.add(crosshair)
+      // ---- /DEBUG ----
 
       container.setData('basename', cfg.basename)
       container.setData('innerSprite', sprite)
+      container.setData('spriteOutline', spriteOutline)
       container.setData('currentState', 'idle')
       container.setData('artOffsetDisplay', artOffsetDisplay)
 
@@ -129,12 +148,17 @@ export function createSpriteCharacter(cfg: SpriteCharacterConfig): CharacterSkin
       }
 
       const artOffsetDisplay = (container.getData('artOffsetDisplay') as number) ?? 0
+      const spriteOutline = container.getData('spriteOutline') as
+        | Phaser.GameObjects.Rectangle
+        | undefined
       if (facing === -1) {
         sprite.setFlipX(true)
         sprite.x = artOffsetDisplay // mirror: shift right by the offset
+        if (spriteOutline) spriteOutline.x = sprite.x
       } else if (facing === 1) {
         sprite.setFlipX(false)
         sprite.x = -artOffsetDisplay // unflipped: shift left by the offset
+        if (spriteOutline) spriteOutline.x = sprite.x
       }
       // facing === 0: leave whatever flip / offset is currently applied
     },

@@ -46,7 +46,10 @@ const config: Phaser.Types.Core.GameConfig = {
     default: 'arcade',
     arcade: {
       gravity: { x: 0, y: 1200 },
-      debug: false,
+      // DEBUG: shows arcade body bounding box (green outline). Turn off
+      // before shipping; useful right now to verify the player body lines
+      // up with the visual character.
+      debug: true,
     },
   },
   input: {
