@@ -8,7 +8,6 @@ const PLAYER_SIZE = 28
 const JUMP_VELOCITY = -780
 const MOVE_SPEED = 320
 const PLATFORM_VERTICAL_GAP = 110
-const START_Y = GAME_HEIGHT - 150
 
 export class GameScene extends Phaser.Scene {
   private inputMgr!: InputManager
@@ -20,12 +19,14 @@ export class GameScene extends Phaser.Scene {
   private score = 0
   private scoreText!: Phaser.GameObjects.Text
   private stars!: Phaser.GameObjects.Graphics
+  private startY = 0
 
   constructor() {
     super({ key: 'GameScene' })
   }
 
   create() {
+    this.startY = GAME_HEIGHT - 150
     this.inputMgr = new InputManager(this)
     this.cameras.main.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 1000000)
 
@@ -72,7 +73,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createPlayer() {
-    this.player = this.add.rectangle(GAME_WIDTH / 2, START_Y, PLAYER_SIZE, PLAYER_SIZE, 0xff6b35)
+    this.player = this.add.rectangle(GAME_WIDTH / 2, this.startY, PLAYER_SIZE, PLAYER_SIZE, 0xff6b35)
     this.player.setStrokeStyle(2, 0xa6391c)
     this.physics.add.existing(this.player)
     this.playerBody = this.player.body as Phaser.Physics.Arcade.Body
@@ -120,7 +121,7 @@ export class GameScene extends Phaser.Scene {
     // score = quão alto chegou
     if (this.player.y < this.highestPlayerY) {
       this.highestPlayerY = this.player.y
-      this.score = Math.floor((START_Y - this.highestPlayerY) / 32)
+      this.score = Math.floor((this.startY - this.highestPlayerY) / 32)
       this.scoreText.setText(`ALTURA: ${Math.max(0, this.score)}m`)
     }
 
