@@ -66,6 +66,11 @@ const DEATH_ZONE_PADDING = 30
 /** Single source of truth for world gravity. Matches the Phaser config. */
 const BASE_GRAVITY_Y = 1200
 
+// Combo system (Phase 4): consecutive new-step-up landings without standing
+// still too long on any step or landing on the same step twice.
+const COMBO_STAND_BREAK_MS = 1500
+const COMBO_POINTS_PER_STEP = 5 // base points awarded per combo level when it breaks
+
 /**
  * Maximum horizontal gap, in pixels, between the right edge of the previous
  * step and the left edge of the next (or vice-versa). Keeps the procedural
@@ -140,6 +145,12 @@ export class GameScene extends Phaser.Scene {
   private scoreOffset = 0
   /** Stored so GameOver can preserve it across AGAIN. */
   private startLevel = 1
+  // ---- Combo system ----
+  private combo = 0
+  private bestCombo = 0
+  private lastLandedPlatform: Phaser.GameObjects.GameObject | null = null
+  private comboStandStartMs = 0
+  private comboText!: Phaser.GameObjects.Text
   private mapTheme!: MapTheme
   private characterSkin!: CharacterSkin
   /** Tracks the last-spawned step's center X and width so the next step can be constrained within reach. */
@@ -188,6 +199,10 @@ export class GameScene extends Phaser.Scene {
     this.dropThroughUntil = 0
     this.leftHeldSince = 0
     this.rightHeldSince = 0
+    this.combo = 0
+    this.bestCombo = 0
+    this.lastLandedPlatform = null
+    this.comboStandStartMs = 0
     this.inputMgr = new InputManager(this)
     this.cameras.main.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 1000000)
     this.physics.world.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 2000000)
@@ -326,12 +341,13 @@ export class GameScene extends Phaser.Scene {
       this.player,
       this.platforms,
       (_p, platform) => {
-        if (this.autoScrollActive) return
         const obj = platform as Phaser.GameObjects.GameObject
-        if (!obj.getData('isFloor')) {
+        // Auto-scroll trigger on first non-floor landing.
+        if (!this.autoScrollActive && !obj.getData('isFloor')) {
           this.autoScrollActive = true
           this.runStartTime = this.time.now
         }
+        this.onPlatformLanded(obj)
       },
       () => {
         if (this.time.now < this.dropThroughUntil) return false
@@ -393,6 +409,17 @@ export class GameScene extends Phaser.Scene {
     this.timeText.setScrollFactor(0)
     this.timeText.setShadow(2, 2, '#000', 0, true, true)
 
+    this.comboText = this.add.text(GAME_WIDTH / 2, 24, '', {
+      fontFamily: 'Courier New, monospace',
+      fontSize: '20px',
+      color: '#ffd93d',
+      fontStyle: 'bold',
+    })
+    this.comboText.setOrigin(0.5, 0)
+    this.comboText.setScrollFactor(0)
+    this.comboText.setShadow(2, 2, '#000', 0, true, true)
+    this.comboText.setLetterSpacing(2)
+
     // Pause button (top-right corner, below the time). Visible on every device;
     // mobile users especially need this since they don't have an ESC key.
     const pauseCx = GAME_WIDTH - 28
@@ -427,6 +454,7 @@ export class GameScene extends Phaser.Scene {
       timeMs: this.elapsedMs,
       level: this.currentLevel,
       superCharges: this.superJumpCharges,
+      bestCombo: this.bestCombo,
     })
   }
 
@@ -602,6 +630,74 @@ export class GameScene extends Phaser.Scene {
       alpha: { from: 1, to: 1 },
       duration: 350,
       ease: 'Back.easeOut',
+    })
+  }
+
+  // ---- Combo system ----
+
+  private onPlatformLanded(platform: Phaser.GameObjects.GameObject) {
+    // Same platform we were just on: no combo change.
+    if (platform === this.lastLandedPlatform) {
+      this.comboStandStartMs = this.time.now
+      return
+    }
+    const platformY = (platform as unknown as { y: number }).y
+    const lastY = this.lastLandedPlatform
+      ? (this.lastLandedPlatform as unknown as { y: number }).y
+      : Number.POSITIVE_INFINITY
+    if (platformY < lastY) {
+      // New step UPWARD: combo grows.
+      this.combo += 1
+      if (this.combo > this.bestCombo) this.bestCombo = this.combo
+      if (this.combo >= 2) this.flashComboGain()
+    } else {
+      // New step but at the same height or lower: combo break + bonus payout.
+      this.breakCombo()
+      this.combo = 1
+    }
+    this.lastLandedPlatform = platform
+    this.comboStandStartMs = this.time.now
+    this.updateComboHUD()
+  }
+
+  private breakCombo() {
+    if (this.combo > 1) {
+      const bonus = this.combo * COMBO_POINTS_PER_STEP
+      this.addPoints(bonus)
+      this.flashNotification(`COMBO +${bonus}`, '#ffd93d')
+    }
+    this.combo = 0
+    this.lastLandedPlatform = null
+    this.updateComboHUD()
+  }
+
+  private updateComboHUD() {
+    if (this.combo >= 2) {
+      this.comboText.setText(`COMBO x${this.combo}`)
+    } else {
+      this.comboText.setText('')
+    }
+  }
+
+  private flashComboGain() {
+    const color = this.combo >= 10 ? '#ff3030' : this.combo >= 5 ? '#ff9a3c' : '#ffd93d'
+    const label = this.combo >= 10 ? `x${this.combo} INSANO!` : `x${this.combo}!`
+    const t = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 10, label, {
+      fontFamily: 'Courier New, monospace',
+      fontSize: this.combo >= 10 ? '40px' : '30px',
+      color,
+      fontStyle: 'bold',
+    })
+    t.setOrigin(0.5)
+    t.setScrollFactor(0)
+    t.setShadow(2, 2, '#000', 0, true, true)
+    this.tweens.add({
+      targets: t,
+      alpha: 0,
+      scale: 1.4,
+      duration: 550,
+      ease: 'Cubic.easeOut',
+      onComplete: () => t.destroy(),
     })
   }
 
@@ -883,18 +979,28 @@ export class GameScene extends Phaser.Scene {
     this.cleanupOffscreenPickups(cam.scrollY)
     this.tickGravityEffect()
 
+    // Combo break: standing on a step too long ends the chain (and pays out).
+    if (this.combo >= 2 && this.playerBody.blocked.down) {
+      if (this.time.now - this.comboStandStartMs > COMBO_STAND_BREAK_MS) {
+        this.breakCombo()
+      }
+    }
+
     // Drive the character's animation based on the current player state.
     this.updatePlayerAnimation()
 
     // ---- Game over ----
     // Player caiu fora da tela OU foi engolido pelo auto-scroll por baixo.
     if (this.player.y > cam.scrollY + GAME_HEIGHT + DEATH_ZONE_PADDING) {
+      // Settle a pending combo into bonus points so it's not silently lost.
+      this.breakCombo()
       // Restore gravity before leaving the scene so the next run starts clean.
       this.physics.world.gravity.y = this.baseGravityY
       this.scene.start('GameOverScene', {
         score: Math.max(0, this.score),
         timeMs: this.elapsedMs,
         points: this.points,
+        bestCombo: this.bestCombo,
         mapId: this.mapTheme.id,
         characterId: this.characterSkin.id,
         startLevel: this.startLevel > 1 ? this.startLevel : undefined,

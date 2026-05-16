@@ -10,55 +10,56 @@ export class GameOverScene extends Phaser.Scene {
     score?: number
     timeMs?: number
     points?: number
+    bestCombo?: number
     mapId?: string
     characterId?: string
     startLevel?: number
   }) {
     this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.75).setOrigin(0)
 
-    const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 140, 'CAIU', {
+    const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 160, 'CAIU', {
       fontFamily: 'Courier New, monospace',
-      fontSize: '64px',
+      fontSize: '60px',
       color: '#ff6b35',
       fontStyle: 'bold',
     })
     title.setOrigin(0.5)
     title.setShadow(2, 2, '#000', 4, true, true)
 
-    const score = this.add.text(
-      GAME_WIDTH / 2,
-      GAME_HEIGHT / 2 - 60,
-      `ALTURA: ${data?.score ?? 0} m`,
-      {
-        fontFamily: 'Courier New, monospace',
-        fontSize: '24px',
-        color: '#f5f5f5',
-      }
-    )
+    const lineHeight = 30
+    let rowY = GAME_HEIGHT / 2 - 90
+
+    const score = this.add.text(GAME_WIDTH / 2, rowY, `ALTURA: ${data?.score ?? 0} m`, {
+      fontFamily: 'Courier New, monospace',
+      fontSize: '22px',
+      color: '#f5f5f5',
+    })
     score.setOrigin(0.5)
+    rowY += lineHeight
 
-    const pts = this.add.text(
-      GAME_WIDTH / 2,
-      GAME_HEIGHT / 2 - 25,
-      `PONTOS: ${data?.points ?? 0}`,
-      {
-        fontFamily: 'Courier New, monospace',
-        fontSize: '20px',
-        color: '#ffd700',
-      }
-    )
+    const pts = this.add.text(GAME_WIDTH / 2, rowY, `PONTOS: ${data?.points ?? 0}`, {
+      fontFamily: 'Courier New, monospace',
+      fontSize: '20px',
+      color: '#ffd700',
+    })
     pts.setOrigin(0.5)
+    rowY += lineHeight
 
-    const time = this.add.text(
-      GAME_WIDTH / 2,
-      GAME_HEIGHT / 2 + 10,
-      `TEMPO: ${formatTime(data?.timeMs ?? 0)}`,
-      {
+    if ((data?.bestCombo ?? 0) >= 2) {
+      const combo = this.add.text(GAME_WIDTH / 2, rowY, `MELHOR COMBO: x${data?.bestCombo}`, {
         fontFamily: 'Courier New, monospace',
-        fontSize: '20px',
-        color: '#c9a96b',
-      }
-    )
+        fontSize: '18px',
+        color: '#ff9a3c',
+      })
+      combo.setOrigin(0.5)
+      rowY += lineHeight
+    }
+
+    const time = this.add.text(GAME_WIDTH / 2, rowY, `TEMPO: ${formatTime(data?.timeMs ?? 0)}`, {
+      fontFamily: 'Courier New, monospace',
+      fontSize: '20px',
+      color: '#c9a96b',
+    })
     time.setOrigin(0.5)
 
     // Two-button bottom bar: AGAIN replays the same map/character, MENU goes back to selection.

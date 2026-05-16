@@ -1,5 +1,15 @@
 # Highrise — History
 
+## 2026-05-17 — Phase 4: combo system
+
+- Each consecutive UPWARD step landing increments the combo counter. Landing on the same step or at equal/lower height ends the chain.
+- Combo also ends if the player stands still on a step for more than `COMBO_STAND_BREAK_MS` (1.5s) — keeps the player honest, no farming x100 by camping.
+- On break, payout: `combo * COMBO_POINTS_PER_STEP` (5 points per level) added to the score. Encourages risk: hold the combo for big jumps to multiply.
+- HUD shows current combo (`COMBO x3`) only when >= 2.
+- Large center-screen flash on each gain: yellow up to x4, orange up to x9, red "x10 INSANO!" from x10 on.
+- `bestCombo` is tracked through the run and shown in both the pause overlay and the game over screen.
+- Game over forces a final `breakCombo()` so a pending chain still pays its bonus before exiting.
+
 ## 2026-05-17 — Removed the Favela map
 
 - Map removed at the user's request. Favela carries real-world weight in Brazil (poverty, violence, struggle of real communities) and turning it into a casual-game backdrop was the wrong call. We don't want to romanticize that setting.

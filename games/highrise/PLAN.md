@@ -32,10 +32,13 @@
 
 ## Phase 4 — Combo system
 
-- [ ] Track consecutive jumps without touching the ground
-- [ ] Score multiplier driven by combo length
-- [ ] Visual feedback (large multiplier text, screen shake, particles)
-- [ ] Decide whether to add the Icy Tower run-into-jump JUMP HEIGHT bonus (separate from the lateral-velocity carryover already in Phase 3)
+- [x] Track consecutive new-step-upward landings (resets on landing on same step or going down)
+- [x] Combo breaks after standing still > 1.5s on a step, paying out bonus points
+- [x] HUD shows current combo (x2+)
+- [x] Big "x3!" / "INSANO!" text flash on each combo increment, colored by tier
+- [x] Bonus payout on break: combo * COMBO_POINTS_PER_STEP
+- [x] Best combo carried into pause overlay and game over screen
+- [ ] Add the Icy Tower run-into-jump JUMP HEIGHT bonus (separate from the lateral-velocity carryover already in Phase 3) — deferred
 
 ## Phase 5 — Scoring and Hall of Fame
 

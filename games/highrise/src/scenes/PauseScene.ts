@@ -14,6 +14,8 @@ export interface PauseSceneData {
   level?: number
   /** Current super-jump charges available. */
   superCharges?: number
+  /** Best combo achieved this run. */
+  bestCombo?: number
 }
 
 /**
@@ -69,6 +71,7 @@ export class PauseScene extends Phaser.Scene {
       ['TEMPO', formatTime(data?.timeMs ?? 0)],
       ['NÍVEL', `${data?.level ?? 1}`],
       ['SUPER', `x${data?.superCharges ?? 0}`],
+      ['MELHOR COMBO', `x${data?.bestCombo ?? 0}`],
     ]
     rows.forEach(([label, value], idx) => {
       const y = statsTop + idx * lineHeight
