@@ -137,4 +137,35 @@ export const nyMap: MapTheme = {
     }
     return rect
   },
+
+  paintCardPreview: ({ scene, container, size }) => {
+    const bg = scene.add.rectangle(0, 0, size, size, 0x0a0f24)
+    container.add(bg)
+    // Glass tower silhouette
+    const tower = scene.add.rectangle(0, 0, size * 0.7, size * 0.95, 0x1a2545)
+    tower.setStrokeStyle(1, 0x14264a)
+    container.add(tower)
+    // Window grid (3x5)
+    const windows = scene.add.graphics()
+    const winW = 5
+    const winH = 6
+    const cols = 3
+    const rows = 5
+    const totalW = size * 0.55
+    const totalH = size * 0.78
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < rows; r++) {
+        const lit = Math.random() < 0.65
+        if (!lit) continue
+        windows.fillStyle(0xffd47a, 0.85)
+        const px = -totalW / 2 + (c + 0.5) * (totalW / cols) - winW / 2
+        const py = -totalH / 2 + (r + 0.5) * (totalH / rows) - winH / 2
+        windows.fillRect(px, py, winW, winH)
+      }
+    }
+    container.add(windows)
+    // Moon
+    const moon = scene.add.circle(size * 0.32, -size * 0.35, 3, 0xfff4d6, 0.9)
+    container.add(moon)
+  },
 }

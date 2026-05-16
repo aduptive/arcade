@@ -161,12 +161,21 @@ export class MenuScene extends Phaser.Scene {
       const y = yTop + cardSize / 2
       const container = this.add.container(x, y)
 
-      // Card "preview" — a small painted swatch of the map's background colors.
-      // We can't easily run paintBackground at small scale, so we just show the
-      // bgColor with a name label. Future: render a thumbnail.
-      const swatch = this.add.rectangle(0, 0, cardSize, cardSize, map.backgroundColor)
+      // Card preview: if the map provides paintCardPreview, render that.
+      // Otherwise fall back to a flat color swatch.
+      const previewInner = this.add.container(0, 0)
+      if (map.paintCardPreview) {
+        map.paintCardPreview({ scene: this, container: previewInner, size: cardSize })
+      } else {
+        const swatch = this.add.rectangle(0, 0, cardSize, cardSize, map.backgroundColor)
+        previewInner.add(swatch)
+      }
+      container.add(previewInner)
+
       const outline = this.add.rectangle(0, 0, cardSize + 6, cardSize + 6)
       outline.setStrokeStyle(3, 0xffd93d, 0)
+      container.add(outline)
+
       const label = this.add.text(0, cardSize / 2 + 10, map.name.toUpperCase(), {
         fontFamily: 'Courier New, monospace',
         fontSize: '10px',
@@ -174,8 +183,8 @@ export class MenuScene extends Phaser.Scene {
         align: 'center',
       })
       label.setOrigin(0.5, 0)
+      container.add(label)
 
-      container.add([outline, swatch, label])
       container.setSize(cardSize + 6, cardSize + 28)
       container.setInteractive({ useHandCursor: true })
       container.on('pointerdown', () => {

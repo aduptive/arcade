@@ -86,4 +86,18 @@ export interface MapTheme {
    * don't supply this use the default colors and no label.
    */
   pickupTheme?: PickupThemeOverride
+
+  /**
+   * Optional preview painted into a small card (used by MenuScene). The map
+   * adds its visual into the given `container` using coordinates in the
+   * range `[-size/2, +size/2]`. Maps that don't implement this fall back to
+   * a flat color swatch using `backgroundColor`.
+   */
+  paintCardPreview?: (args: CardPreviewArgs) => void
+}
+
+export interface CardPreviewArgs {
+  scene: Phaser.Scene
+  container: Phaser.GameObjects.Container
+  size: number
 }

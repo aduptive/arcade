@@ -35,4 +35,20 @@ export const defaultMap: MapTheme = {
     rect.setStrokeStyle(2, 0x3d6d28)
     return rect
   },
+
+  paintCardPreview: ({ scene, container, size }) => {
+    const bg = scene.add.rectangle(0, 0, size, size, 0x1a1a2e)
+    container.add(bg)
+    const stars = scene.add.graphics()
+    stars.fillStyle(0xffffff, 0.85)
+    for (let i = 0; i < 14; i++) {
+      const sx = -size / 2 + Math.random() * size
+      const sy = -size / 2 + Math.random() * size
+      stars.fillCircle(sx, sy, Math.random() < 0.85 ? 1 : 1.6)
+    }
+    container.add(stars)
+    const step = scene.add.rectangle(0, size * 0.28, size * 0.5, 4, 0x6fb04a)
+    step.setStrokeStyle(1, 0x3d6d28)
+    container.add(step)
+  },
 }

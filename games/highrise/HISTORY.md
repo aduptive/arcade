@@ -1,5 +1,17 @@
 # Highrise — History
 
+## 2026-05-17 — Themed pickups per map + real map card previews
+
+- `MapTheme.pickupTheme` lets each map re-skin the four pickup types with custom fill/stroke colors and an optional single-glyph label (e.g. 'B' for bagel on NY, 'J' for jabuticaba on Arborea). Mechanics unchanged; only visuals differ.
+- Skyline (NY): bagel B / coffee C / donut D / pretzel ?
+- Arborea: jabuticaba J / mel M / folha F / pinha ?
+- Default map keeps the generic colors with no label.
+- `MapTheme.paintCardPreview(container, size)` replaces the flat color swatch in MenuScene with a real miniature of the map.
+  - Default: night sky with stars and a green step.
+  - Skyline: glass tower silhouette with a lit-window grid + moon.
+  - Arborea: sky/forest split with distant tree silhouettes, central trunk and leaf clusters on the sides.
+- MenuScene falls back to the previous flat swatch if a map doesn't supply a card preview.
+
 ## 2026-05-17 — Phase 5: local leaderboard and Hall of Fame screen
 
 - New `shared/score/leaderboard.ts`: top-10 localStorage list shared across arcade games (each game keys its own list). Includes `computeScore(altura, pontos, bestCombo)` formula (altura×10 + pontos + bestCombo×50) and a `lastName` remembered between runs.

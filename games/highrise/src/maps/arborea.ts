@@ -158,4 +158,34 @@ export const arboreaMap: MapTheme = {
     }
     return rect
   },
+
+  paintCardPreview: ({ scene, container, size }) => {
+    // Sky on top, forest floor on bottom.
+    const sky = scene.add.rectangle(0, -size / 4, size, size / 2, 0xa5c9be)
+    container.add(sky)
+    const ground = scene.add.rectangle(0, size / 4, size, size / 2, 0x1a2e1a)
+    container.add(ground)
+    // Distant trees silhouette.
+    const trees = scene.add.graphics()
+    trees.fillStyle(0x0e1f0e, 0.9)
+    for (let i = 0; i < 4; i++) {
+      const tx = -size / 2 + (i + 0.5) * (size / 4)
+      const ty = 0
+      const peak = 14 + Math.random() * 8
+      trees.fillTriangle(tx - 8, ty + 6, tx, ty - peak, tx + 8, ty + 6)
+    }
+    container.add(trees)
+    // Trunk at center.
+    const trunk = scene.add.rectangle(0, 0, size * 0.22, size, 0x4a2e1a)
+    trunk.setStrokeStyle(1, 0x2a1810)
+    container.add(trunk)
+    // Branch + leaves on each side.
+    const leaves = scene.add.graphics()
+    leaves.fillStyle(0x6da053, 1)
+    leaves.fillCircle(-size * 0.2, -size * 0.18, 5)
+    leaves.fillCircle(-size * 0.18, -size * 0.1, 4)
+    leaves.fillCircle(size * 0.2, size * 0.12, 5)
+    leaves.fillCircle(size * 0.18, size * 0.2, 4)
+    container.add(leaves)
+  },
 }
