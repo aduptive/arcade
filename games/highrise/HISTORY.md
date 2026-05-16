@@ -1,5 +1,12 @@
 # Highrise — History
 
+## 2026-05-16 — Phase 1 tuning: auto-scroll começa após o 1º step
+
+- Feedback do user após jogar: feel da Phase 1 ficou "perfeito", mas auto-scroll ativando desde o frame 1 dá pressão antes do jogo "começar de verdade".
+- Trigger movido: `autoScrollActive` vira true só quando `player.y < startY - 50` (subiu pelo menos 1 step do chão inicial).
+- Antes disso a câmera só segue o player (Doodle Jump-style). Depois, comportamento híbrido completo da Phase 1.
+- `AUTO_SCROLL_SPEED = 30` mantido como baseline (vai escalar por nível na Phase 2).
+
 ## 2026-05-16 — Phase 1: auto-scroll híbrido + permadeath
 
 **Decisões travadas hoje:**

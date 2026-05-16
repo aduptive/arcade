@@ -24,6 +24,7 @@ export class GameScene extends Phaser.Scene {
   private scoreText!: Phaser.GameObjects.Text
   private stars!: Phaser.GameObjects.Graphics
   private startY = 0
+  private autoScrollActive = false
 
   constructor() {
     super({ key: 'GameScene' })
@@ -31,6 +32,7 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     this.startY = GAME_HEIGHT - 150
+    this.autoScrollActive = false
     this.inputMgr = new InputManager(this)
     this.cameras.main.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 1000000)
 
@@ -117,15 +119,24 @@ export class GameScene extends Phaser.Scene {
     if (this.player.x < -PLAYER_SIZE / 2) this.player.x = GAME_WIDTH + PLAYER_SIZE / 2
     if (this.player.x > GAME_WIDTH + PLAYER_SIZE / 2) this.player.x = -PLAYER_SIZE / 2
 
+    // Auto-scroll só começa depois que o player sobe pelo primeiro step.
+    if (!this.autoScrollActive && this.player.y < this.startY - 50) {
+      this.autoScrollActive = true
+    }
+
     // ---- Câmera: auto-scroll híbrido ----
-    // (1) sempre sobe num ritmo mínimo (pressão do nível)
+    // (1) sempre sobe num ritmo mínimo (pressão do nível) — após o primeiro step
     // (2) também segue o player pra cima se ele estiver subindo mais rápido
     // Câmera nunca desce.
     const cam = this.cameras.main
     const dtSec = Math.min(dt, 100) / 1000 // cap pra evitar pulo gigante em tab switch
     const playerTarget = this.player.y - GAME_HEIGHT * 0.6
-    const autoScrollTarget = cam.scrollY - AUTO_SCROLL_SPEED * dtSec
-    cam.scrollY = Math.min(cam.scrollY, playerTarget, autoScrollTarget)
+    if (this.autoScrollActive) {
+      const autoScrollTarget = cam.scrollY - AUTO_SCROLL_SPEED * dtSec
+      cam.scrollY = Math.min(cam.scrollY, playerTarget, autoScrollTarget)
+    } else {
+      cam.scrollY = Math.min(cam.scrollY, playerTarget)
+    }
 
     // score = quão alto chegou
     if (this.player.y < this.highestPlayerY) {
