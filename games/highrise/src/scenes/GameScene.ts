@@ -8,6 +8,12 @@ import {
   randomPickupType,
   type PickupType,
 } from '../game/Pickup'
+import { DEFAULT_MAP_ID, getMapById, type MapTheme } from '../maps'
+import {
+  DEFAULT_CHARACTER_ID,
+  getCharacterById,
+  type CharacterSkin,
+} from '../characters'
 
 const PLATFORM_HEIGHT = 16
 const PLAYER_SIZE = 28
@@ -65,7 +71,6 @@ export class GameScene extends Phaser.Scene {
   private highestPlayerY = 0
   private score = 0
   private scoreText!: Phaser.GameObjects.Text
-  private stars!: Phaser.GameObjects.Graphics
   private startY = 0
   private autoScrollActive = false
   private runStartTime = 0 // ms — preenchido quando auto-scroll dispara
@@ -78,6 +83,8 @@ export class GameScene extends Phaser.Scene {
   private chargeTimerMs = 0 // ms acumulados desde a última carga ganha (zera ao ganhar; congela em max)
   private superBoostUntil = 0 // absolute time when the sustained super-jump boost ends
   private dropThroughUntil = 0 // absolute time when the platform drop-through window ends
+  private mapTheme!: MapTheme
+  private characterSkin!: CharacterSkin
   private pointsText!: Phaser.GameObjects.Text
   private effectText!: Phaser.GameObjects.Text
   private points = 0
@@ -89,7 +96,16 @@ export class GameScene extends Phaser.Scene {
     super({ key: 'GameScene' })
   }
 
+  init(data: { mapId?: string; characterId?: string }) {
+    this.mapTheme = getMapById(data?.mapId ?? DEFAULT_MAP_ID)
+    this.characterSkin = getCharacterById(data?.characterId ?? DEFAULT_CHARACTER_ID)
+    // Apply the map's background color to the camera so it shows behind any
+    // gaps in the painted background.
+    this.cameras.main?.setBackgroundColor(this.mapTheme.backgroundColor)
+  }
+
   create() {
+    this.cameras.main.setBackgroundColor(this.mapTheme.backgroundColor)
     this.startY = GAME_HEIGHT - 150
     this.autoScrollActive = false
     this.runStartTime = 0
@@ -107,7 +123,7 @@ export class GameScene extends Phaser.Scene {
     this.baseGravityY = this.physics.world.gravity.y
     this.physics.world.gravity.y = this.baseGravityY // reset in case of scene restart
 
-    this.drawBackground()
+    this.mapTheme.paintBackground({ scene: this, width: GAME_WIDTH, height: GAME_HEIGHT })
     this.platforms = this.physics.add.staticGroup()
     this.pickups = this.physics.add.staticGroup()
     this.spawnInitialPlatforms()
@@ -117,22 +133,6 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.pickups, (_player, pickup) => {
       this.collectPickup(pickup as Phaser.GameObjects.Rectangle)
     })
-  }
-
-  private drawBackground() {
-    const bg = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x1a1a2e)
-    bg.setScrollFactor(0)
-
-    this.stars = this.add.graphics()
-    this.stars.fillStyle(0xffffff, 0.7)
-    for (let i = 0; i < 80; i++) {
-      this.stars.fillCircle(
-        Math.random() * GAME_WIDTH,
-        Math.random() * GAME_HEIGHT,
-        Math.random() < 0.85 ? 1 : 2
-      )
-    }
-    this.stars.setScrollFactor(0.3)
   }
 
   private spawnInitialPlatforms() {
@@ -155,8 +155,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   private addPlatform(x: number, y: number, width = 96, isFloor = false) {
-    const plat = this.add.rectangle(x, y, width, PLATFORM_HEIGHT, 0x6fb04a)
-    plat.setStrokeStyle(2, 0x3d6d28)
+    const plat = this.mapTheme.paintStep({
+      scene: this,
+      x,
+      y,
+      width,
+      height: PLATFORM_HEIGHT,
+      isFloor,
+    })
     if (isFloor) plat.setData('isFloor', true)
     this.platforms.add(plat)
     const body = (plat as any).body as Phaser.Physics.Arcade.StaticBody
@@ -166,8 +172,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createPlayer() {
-    this.player = this.add.rectangle(GAME_WIDTH / 2, this.startY, PLAYER_SIZE, PLAYER_SIZE, 0xff6b35)
-    this.player.setStrokeStyle(2, 0xa6391c)
+    this.player = this.characterSkin.paintCharacter({
+      scene: this,
+      x: GAME_WIDTH / 2,
+      y: this.startY,
+      size: PLAYER_SIZE,
+    })
     this.physics.add.existing(this.player)
     this.playerBody = this.player.body as Phaser.Physics.Arcade.Body
     this.playerBody.setCollideWorldBounds(true) // colide com paredes laterais
