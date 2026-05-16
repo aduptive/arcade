@@ -3,8 +3,32 @@ import { BootScene } from './scenes/BootScene'
 import { GameScene } from './scenes/GameScene'
 import { GameOverScene } from './scenes/GameOverScene'
 
-export const GAME_WIDTH = 480
-export const GAME_HEIGHT = 800
+// Dynamic game canvas sizing.
+//
+// - On portrait phones, uses the device's actual width/height for crisp,
+//   pixel-perfect rendering with no scaling.
+// - On wide desktops, caps the width so gameplay (which is bounded by jump
+//   distance) stays sensible. Below the cap, the canvas matches the window.
+// - With the cap and `Phaser.Scale.FIT`, desktop users see a wider portrait
+//   board centered on screen (with side bars), instead of a tiny 480-wide
+//   column with empty space all around.
+//
+// `pixelArt` is intentionally OFF: we have no pixel-art textures yet, only
+// vector shapes. Smooth scaling looks better than nearest-neighbor for this.
+const MIN_GAME_WIDTH = 320
+const MAX_GAME_WIDTH = 600
+const MIN_GAME_HEIGHT = 480
+const MAX_GAME_HEIGHT = 1280
+
+function computeGameSize() {
+  const w = Math.min(Math.max(window.innerWidth, MIN_GAME_WIDTH), MAX_GAME_WIDTH)
+  const h = Math.min(Math.max(window.innerHeight, MIN_GAME_HEIGHT), MAX_GAME_HEIGHT)
+  return { width: w, height: h }
+}
+
+const size = computeGameSize()
+export const GAME_WIDTH = size.width
+export const GAME_HEIGHT = size.height
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -12,7 +36,6 @@ const config: Phaser.Types.Core.GameConfig = {
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
   backgroundColor: '#1a1a2e',
-  pixelArt: true,
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

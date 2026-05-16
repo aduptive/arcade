@@ -1,5 +1,13 @@
 # Highrise — History
 
+## 2026-05-17 — Dynamic canvas size and smooth rendering
+
+- User asked for the board to fill the screen and for the graphics to look better (less pixelated).
+- `GAME_WIDTH` and `GAME_HEIGHT` are now derived from `window.innerWidth/innerHeight`, clamped to `[320..600]` wide and `[480..1280]` tall. Below the cap the canvas matches the actual viewport, so portrait phones now use their full width with no black bars.
+- Removed `pixelArt: true` from the Phaser config and the `image-rendering: pixelated` CSS rule on `<canvas>`. Both forced nearest-neighbor scaling, which only makes sense with pixel-art textures (we have none yet — only vector shapes). Smooth scaling looks much better for the current art style.
+- Width is capped at 600 because jump distance is bounded by physics. Without the cap, a 1200-wide board could spawn steps farther apart than the player can reach. Lifting the cap requires a "spawn-aware" step generator that knows the previous step's position and stays within reach (logged as a follow-up).
+- All gameplay constants (walls, HUD positions, camera bounds) already use `GAME_WIDTH/GAME_HEIGHT` dynamically, so no other changes were needed.
+
 ## 2026-05-17 — Super jump is now a dedicated, exclusive input
 
 - User feedback: super jump was firing on any `action` press whenever a charge was available, with no way to choose a regular jump using that same key. They wanted the super jump to be an explicit choice.
