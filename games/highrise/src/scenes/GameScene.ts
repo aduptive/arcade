@@ -14,6 +14,7 @@ import {
   getCharacterById,
   type CharacterGameObject,
   type CharacterSkin,
+  type PlayerState,
 } from '../characters'
 
 const PLATFORM_HEIGHT = 16
@@ -484,6 +485,29 @@ export class GameScene extends Phaser.Scene {
     })
   }
 
+  private updatePlayerAnimation() {
+    if (!this.characterSkin.updateAnimation) return // placeholder rectangles opt out
+    const onGround = this.playerBody.blocked.down
+    const vx = this.playerBody.velocity.x
+    const vy = this.playerBody.velocity.y
+    const movingHoriz = Math.abs(vx) > 20
+    const inBoost = this.time.now < this.superBoostUntil
+
+    let state: PlayerState
+    if (inBoost) {
+      state = 'climb' // sustained-lift super jump reads beautifully as a climb animation
+    } else if (!onGround) {
+      state = vy < 0 ? 'jump' : 'fall'
+    } else if (movingHoriz) {
+      state = 'walk'
+    } else {
+      state = 'idle'
+    }
+
+    const facing: -1 | 0 | 1 = vx < -10 ? -1 : vx > 10 ? 1 : 0
+    this.characterSkin.updateAnimation({ gameObject: this.player, state, facing })
+  }
+
   private flashSuperUsed() {
     // Pulse the player for visual reading of the super-jump trigger.
     this.tweens.add({
@@ -686,6 +710,9 @@ export class GameScene extends Phaser.Scene {
     // Pickups e efeitos: limpa o que saiu da tela e expira efeitos com timer
     this.cleanupOffscreenPickups(cam.scrollY)
     this.tickGravityEffect()
+
+    // Drive the character's animation based on the current player state.
+    this.updatePlayerAnimation()
 
     // ---- Game over ----
     // Player caiu fora da tela OU foi engolido pelo auto-scroll por baixo.

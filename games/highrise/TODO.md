@@ -2,8 +2,10 @@
 
 ## In flight
 
-- [ ] Play-test the new menu + 3 maps (Default / Favela / NY) + 3 characters (Cubinho / Climber / Capivara) and report what feels off
-- [ ] Themed pickups per map (açaí/guaraná on favela; bagel/coffee on NY; etc.) — mechanics already work, only visuals change
+- [ ] Play-test the 3 Craftpix sprite characters (Woodcutter / GraveRobber / SteamMan) with their animations (idle/walk/jump/climb) and check if the jump anim transitions look right vs `fall` reusing the last jump frame
+- [ ] Decide whether to ALSO load run/hurt/death/push/craft anims (currently only idle/walk/jump/climb)
+- [ ] Wire the dust effect spritesheets from `public/sprites/characters/Effects/` for jump/land particles (Phase 6 juice)
+- [ ] Themed pickups per map (açaí/guaraná on favela; bagel/coffee on NY; etc.)
 - [ ] Map card preview thumbnail (a tiny rendered sample of the actual map background instead of a flat color swatch)
 - [ ] Audio infrastructure stub (one SoundManager that maps eventually load from)
 - [ ] Tune pickup spawn chance (15% per step) and the mystery-box outcome distribution after more runs
@@ -12,6 +14,8 @@
 
 ## Recently done
 
+- [x] Sprite characters with proper animations (Woodcutter / GraveRobber / SteamMan from Craftpix, state-driven idle/walk/jump/climb with horizontal flip)
+- [x] Moved arcade folder out of foodish, now at `/Users/andreascarpello/Projects/Aduptive/arcade/`
 - [x] Reachability constraint on step spawn (max 180px gap, no more impossible jumps on wider canvases)
 - [x] Multi-map architecture: MapTheme + CharacterSkin + MenuScene + generic GameScene
 - [x] Three maps shipped: Default (night sky), Favela (rooftops with decorations), NY (window ledges, Crazy Climber homage)

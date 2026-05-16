@@ -20,6 +20,16 @@ export type CharacterGameObject =
   | Phaser.GameObjects.Sprite
   | Phaser.GameObjects.Image
 
+/** High-level player state, mapped to an animation by the character skin. */
+export type PlayerState = 'idle' | 'walk' | 'jump' | 'fall' | 'climb'
+
+export interface CharacterUpdateArgs {
+  gameObject: CharacterGameObject
+  state: PlayerState
+  /** Direction the player is facing: -1 left, 1 right, 0 neutral. */
+  facing: -1 | 0 | 1
+}
+
 export interface CharacterSkin {
   /** Stable id used for selection and persistence. */
   id: string
@@ -35,4 +45,12 @@ export interface CharacterSkin {
    * without affecting collisions.
    */
   paintCharacter: (args: CharacterPaintArgs) => CharacterGameObject
+
+  /**
+   * Optional per-frame hook that updates the visual based on the player's
+   * current state. Sprite characters use this to play the right animation
+   * (idle/walk/jump/etc.) and flip horizontally. Rectangle placeholders
+   * leave this undefined.
+   */
+  updateAnimation?: (args: CharacterUpdateArgs) => void
 }

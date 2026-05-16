@@ -1,5 +1,18 @@
 # Highrise — History
 
+## 2026-05-17 — Sprite characters from Craftpix (Woodcutter / GraveRobber / SteamMan) with state-driven animations
+
+- Replaced the previous 32x32 chibi spritesheet (OpenGameArt download with no per-frame labels) with three 48x48 Craftpix character packs that ship each animation as its own labeled spritesheet (idle, walk, run, jump, climb, push, craft, hurt, death, attack1-3).
+- New `PlayerState` type (`idle | walk | jump | fall | climb`) and `updateAnimation(args)` hook on `CharacterSkin`. Rectangle placeholders simply don't implement the hook.
+- `spriteCharacter.ts` is a shared factory that builds a sprite-based `CharacterSkin` from a basename. The three new character files are 4 lines each thanks to this.
+- BootScene preloads idle/walk/jump/climb spritesheets for all three characters (12 files) and registers Phaser animations once for the whole game lifetime.
+- GameScene drives the animation each frame: ground+input → walk, in air going up → jump, in air going down → fall (uses last jump frame), super-jump boost → climb (reads beautifully as a sustained ascent), otherwise idle. Sprite is flipped horizontally based on velocity.
+- Player body is forced to `PLAYER_SIZE x PLAYER_SIZE` regardless of the sprite's intrinsic art size (48x48 scaled to 28x28 logical), keeping collisions identical across all character types.
+- `flashSuperUsed` now uses `setTint` for sprites and `setFillStyle` for rectangles via feature detection.
+- DEFAULT_CHARACTER_ID switched from the orange rectangle to `woodcutter`.
+- Credit added in README to Craftpix; their free 3-character pack license allows commercial use with attribution.
+- Old chibi character files (`pixelOrange/Royal/Soldier/Mini.ts`) and `public/sprites/characters.png` removed.
+
 ## 2026-05-17 — Reachability constraint on step spawn
 
 - User-reported bug: at higher levels (narrower steps) and on wider canvases (post 480 → 600 cap), two consecutive steps could spawn on opposite walls — gap larger than the player's maximum horizontal jump. Unwinnable instant death.

@@ -57,3 +57,7 @@ Dev: abrir `http://localhost:5173/` para landing, ou `http://localhost:5173/game
 | up      | rotacionar    | pular         |
 | down    | soft drop     | (livre)       |
 | action  | hard drop     | pular (alt)   |
+
+## Asset credits
+
+- **Highrise character sprites** (Woodcutter, GraveRobber, SteamMan): Free 3 Character Sprite Sheets, from [Craftpix.net](https://craftpix.net/) — covered by the [Craftpix license](https://craftpix.net/file-licenses/). Credit when shipping.
