@@ -1,5 +1,18 @@
 # Highrise — History
 
+## 2026-05-17 — Phase 3 (parte 1): Super pulo com cooldown
+
+- Reformulação da Phase 3: além dos pickups de mundo originalmente planejados, vamos ter também **abilities baseadas em cooldown**. Super pulo é o primeiro.
+- **Mecânica:**
+  - Velocidade × `SUPER_JUMP_MULTIPLIER = 1.5` (≈ 2.25× a altura, sensação de "o dobro" sem quebrar a física)
+  - Carga única: 1 a cada 60s de corrida ativa, máximo 3, congelado em max
+  - Botão `action` (espaço / gamepad B / swipe down) consome carga
+  - Sem carga: `action` cai como pulo normal (não vira tecla "morta")
+  - Só dispara no chão (`blocked.down`) — não é double jump
+- **HUD:** `SUPER: xN (Ms)` em ciano abaixo do nível, mostra cargas atuais + segundos pra próxima.
+- **Feedback:** ao usar, player escala 1.4 → 1.0 e flasha ciano por 180ms. Ao ganhar carga, texto do HUD pulsa (Back.easeOut).
+- **Tuning escolhido (60s/charge, max 3):** corrida típica de 1-3 min dá 1-3 super pulos. Suficiente pra ser estratégico, raro pra ser especial.
+
 ## 2026-05-17 — Removido screen-wrap, paredes laterais reais
 
 - Antes: player atravessava a borda (Pac-Man style) — ficou cringe.

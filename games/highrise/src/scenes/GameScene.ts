@@ -8,6 +8,11 @@ const JUMP_VELOCITY = -780
 const MOVE_SPEED = 320
 const DEATH_ZONE_PADDING = 30
 
+// Super jump (Phase 3 — cooldown-based)
+const SUPER_JUMP_MULTIPLIER = 1.5 // velocidade do pulo, resulta em ~2.25× a altura
+const SUPER_JUMP_CHARGE_INTERVAL_MS = 60_000 // 1 carga por minuto
+const SUPER_JUMP_MAX_CHARGES = 3
+
 // Phase 2: curva de dificuldade. Tudo deriva da altura atual.
 const HEIGHT_FOR_MAX_DIFFICULTY = 500 // m em que tudo está no máximo
 const METERS_PER_LEVEL = 50 // de quanto em quanto incrementa o "nível" do HUD
@@ -47,6 +52,9 @@ export class GameScene extends Phaser.Scene {
   private timeText!: Phaser.GameObjects.Text
   private levelText!: Phaser.GameObjects.Text
   private currentLevel = 1
+  private superText!: Phaser.GameObjects.Text
+  private superJumpCharges = 0
+  private chargeTimerMs = 0 // ms acumulados desde a última carga ganha (zera ao ganhar; congela em max)
 
   constructor() {
     super({ key: 'GameScene' })
@@ -58,6 +66,8 @@ export class GameScene extends Phaser.Scene {
     this.runStartTime = 0
     this.elapsedMs = 0
     this.currentLevel = 1
+    this.superJumpCharges = 0
+    this.chargeTimerMs = 0
     this.inputMgr = new InputManager(this)
     this.cameras.main.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 1000000)
     // Bounds do mundo físico: laterais em 0..GAME_WIDTH (collision real),
@@ -152,6 +162,14 @@ export class GameScene extends Phaser.Scene {
     this.levelText.setScrollFactor(0)
     this.levelText.setShadow(1, 1, '#000', 0, true, true)
 
+    this.superText = this.add.text(20, 70, 'SUPER: x0', {
+      fontFamily: 'Courier New, monospace',
+      fontSize: '14px',
+      color: '#7ad4ff',
+    })
+    this.superText.setScrollFactor(0)
+    this.superText.setShadow(1, 1, '#000', 0, true, true)
+
     this.timeText = this.add.text(GAME_WIDTH - 20, 20, 'TEMPO: 0:00', {
       fontFamily: 'Courier New, monospace',
       fontSize: '22px',
@@ -161,6 +179,44 @@ export class GameScene extends Phaser.Scene {
     this.timeText.setOrigin(1, 0)
     this.timeText.setScrollFactor(0)
     this.timeText.setShadow(2, 2, '#000', 0, true, true)
+  }
+
+  private updateSuperHUD() {
+    if (this.superJumpCharges >= SUPER_JUMP_MAX_CHARGES) {
+      this.superText.setText(`SUPER: x${this.superJumpCharges} (MAX)`)
+    } else {
+      const remainingMs = SUPER_JUMP_CHARGE_INTERVAL_MS - this.chargeTimerMs
+      const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000))
+      this.superText.setText(`SUPER: x${this.superJumpCharges} (${remainingSec}s)`)
+    }
+  }
+
+  private flashSuperGain() {
+    // Flash sutil no texto do HUD
+    this.tweens.add({
+      targets: this.superText,
+      scale: { from: 1.6, to: 1 },
+      alpha: { from: 1, to: 1 },
+      duration: 350,
+      ease: 'Back.easeOut',
+    })
+  }
+
+  private flashSuperUsed() {
+    // Player pulsa pra dar leitura visual do super pulo
+    this.tweens.add({
+      targets: this.player,
+      scaleX: { from: 1.4, to: 1 },
+      scaleY: { from: 1.4, to: 1 },
+      duration: 300,
+      ease: 'Cubic.easeOut',
+    })
+    // Também muda a cor brevemente
+    const originalFill = (this.player as Phaser.GameObjects.Rectangle).fillColor
+    ;(this.player as Phaser.GameObjects.Rectangle).setFillStyle(0x7ad4ff)
+    this.time.delayedCall(180, () => {
+      ;(this.player as Phaser.GameObjects.Rectangle).setFillStyle(originalFill)
+    })
   }
 
   private flashLevelUp(level: number) {
@@ -209,9 +265,22 @@ export class GameScene extends Phaser.Scene {
     else if (this.inputMgr.isPressed('right')) this.playerBody.setVelocityX(MOVE_SPEED)
     else this.playerBody.setVelocityX(0)
 
-    const wantsJump = this.inputMgr.justPressed('up') || this.inputMgr.justPressed('action')
-    if (wantsJump && this.playerBody.blocked.down) {
-      this.playerBody.setVelocityY(JUMP_VELOCITY)
+    // Pulo:
+    //   - `up` (seta cima / W / gamepad up/A / tap) = pulo normal
+    //   - `action` (espaço / gamepad B / swipe down) = super pulo (consome 1 carga)
+    //     se não tiver carga, cai como pulo normal pra não ser tecla "morta"
+    if (this.playerBody.blocked.down) {
+      if (this.inputMgr.justPressed('action')) {
+        if (this.superJumpCharges > 0) {
+          this.playerBody.setVelocityY(JUMP_VELOCITY * SUPER_JUMP_MULTIPLIER)
+          this.superJumpCharges--
+          this.flashSuperUsed()
+        } else {
+          this.playerBody.setVelocityY(JUMP_VELOCITY)
+        }
+      } else if (this.inputMgr.justPressed('up')) {
+        this.playerBody.setVelocityY(JUMP_VELOCITY)
+      }
     }
 
     // (sem screen-wrap — o player colide nas paredes laterais via world bounds)
@@ -221,6 +290,21 @@ export class GameScene extends Phaser.Scene {
       this.elapsedMs = this.time.now - this.runStartTime
       this.timeText.setText(`TEMPO: ${this.formatTime(this.elapsedMs)}`)
     }
+
+    // Cargas de super pulo: ticka só quando a corrida começou.
+    if (this.autoScrollActive) {
+      if (this.superJumpCharges < SUPER_JUMP_MAX_CHARGES) {
+        this.chargeTimerMs += Math.min(dt, 100)
+        if (this.chargeTimerMs >= SUPER_JUMP_CHARGE_INTERVAL_MS) {
+          this.superJumpCharges++
+          this.chargeTimerMs = 0
+          this.flashSuperGain()
+        }
+      } else {
+        this.chargeTimerMs = 0
+      }
+    }
+    this.updateSuperHUD()
 
     // Config corrente derivada da altura
     const cfg = getLevelConfig(Math.max(0, this.score))
