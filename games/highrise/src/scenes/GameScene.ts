@@ -5,7 +5,8 @@ import { InputManager } from '@shared/input/InputManager'
 const PLATFORM_HEIGHT = 16
 const PLAYER_SIZE = 28
 const JUMP_VELOCITY = -780
-const MOVE_SPEED = 240
+const GROUND_MAX_SPEED = 320 // velocidade máxima horizontal no chão (responsivo)
+const AIR_MAX_SPEED = 240 // velocidade máxima horizontal no ar (mais controlado)
 // Controle no ar é assimétrico:
 //   acelerar na direção atual (ou do zero) = rápido (responsivo)
 //   inverter a direção = lento (decisão pesa, recompensa precisão)
@@ -273,8 +274,8 @@ export class GameScene extends Phaser.Scene {
     //     Mudar direção no ar = possível, mas com inércia.
     const onGround = this.playerBody.blocked.down
     if (onGround) {
-      if (this.inputMgr.isPressed('left')) this.playerBody.setVelocityX(-MOVE_SPEED)
-      else if (this.inputMgr.isPressed('right')) this.playerBody.setVelocityX(MOVE_SPEED)
+      if (this.inputMgr.isPressed('left')) this.playerBody.setVelocityX(-GROUND_MAX_SPEED)
+      else if (this.inputMgr.isPressed('right')) this.playerBody.setVelocityX(GROUND_MAX_SPEED)
       else this.playerBody.setVelocityX(0)
     } else {
       const dtSec = Math.min(dt, 100) / 1000
@@ -286,7 +287,7 @@ export class GameScene extends Phaser.Scene {
         const accel = vx < 0 ? AIR_ACCEL_REVERSE : AIR_ACCEL_SAME
         vx += accel * dtSec
       }
-      vx = Math.max(-MOVE_SPEED, Math.min(MOVE_SPEED, vx))
+      vx = Math.max(-AIR_MAX_SPEED, Math.min(AIR_MAX_SPEED, vx))
       this.playerBody.setVelocityX(vx)
     }
 
