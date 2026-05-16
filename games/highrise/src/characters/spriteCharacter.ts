@@ -72,11 +72,14 @@ export const CRAFTPIX_ANIM_DEFS: Record<string, { frames: number; loop: boolean;
 export const USED_PLAYER_STATES: PlayerState[] = ['idle', 'walk', 'jump', 'climb']
 
 /**
- * Empirically measured: the Craftpix art's body center sits about 6 source
- * pixels right of the 48px-frame center. Multiply by (display size / 48) to
- * get the per-character offset in display pixels.
+ * After inspecting the actual sprite files, the character BODY is essentially
+ * centered in its 48px frame for all three characters. The visual shift we
+ * see on flip comes mostly from the asymmetric tool (axe/wrench/etc.)
+ * swinging to the opposite side — that's inherent to the art and cannot be
+ * compensated without re-drawing it. We leave the offset at 0 and only the
+ * tool visibly swaps sides, which is normal platformer behavior.
  */
-const ART_OFFSET_IN_FRAME = 6
+const ART_OFFSET_IN_FRAME = 0
 
 export interface SpriteCharacterConfig {
   id: string
