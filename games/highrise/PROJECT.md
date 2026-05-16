@@ -6,7 +6,7 @@ Vertical-scroll jumper inspired by Icy Tower and Doodle Jump. Single-player, sco
 
 ## Current status
 
-Active development. Multi-map architecture shipped: `MapTheme` + `CharacterSkin` + `MenuScene` + generic `GameScene`. Three maps (Default, Favela, NY) and three characters (Cubinho, Climber, Capivara) selectable via a menu; selection persists across sessions in localStorage. Gameplay loop (Phase 1-3) is complete and stable. Next focus is content polish (themed pickups per map, sprites, sound) and combo system (Phase 4).
+Active development. Multi-map architecture shipped: `MapTheme` + `CharacterSkin` + `MenuScene` + generic `GameScene`. Three maps (Default, Skyline / NY, Arborea) and six characters (Woodcutter, Grave Robber, Steam Man, plus the placeholder Cubinho, Climber, Capivara) selectable via a menu; selection persists across sessions in localStorage. Gameplay loop (Phase 1-3) is complete and stable. Next focus is the combo system (Phase 4), a local Hall of Fame (Phase 5), audio infrastructure and themed pickups per map.
 
 ## Scope
 

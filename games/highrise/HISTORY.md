@@ -1,5 +1,11 @@
 # Highrise — History
 
+## 2026-05-17 — Removed the Favela map
+
+- Map removed at the user's request. Favela carries real-world weight in Brazil (poverty, violence, struggle of real communities) and turning it into a casual-game backdrop was the wrong call. We don't want to romanticize that setting.
+- Deleted `games/highrise/src/maps/favela.ts` and the import in `maps/index.ts`. ALL_MAPS now contains Default, Skyline (NY) and Arborea.
+- Capivara character is kept — it's a Brazilian animal that fits any future Brazil-themed map, not specifically the favela.
+
 ## 2026-05-17 — Fix: sprite no longer "jumps" position when flipping facing
 
 - User confirmed via side-by-side screenshots that flipping the character left/right visually shifted the sprite ~14 display pixels even though the physics body stayed put. The Craftpix art has the character's body about 6 source pixels right of center within its 48x48 frame, and `setFlipX(true)` mirrors around the frame center.

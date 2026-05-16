@@ -46,7 +46,7 @@
 
 ## Phase 6 — Multi-map / Crazy Climber architecture
 
-This phase is a strategic pivot: instead of committing to a single visual identity, the game becomes a Crazy Climber-style platform with multiple selectable maps and characters. Each map's "step" is thematic architecture (favela rooftops, NY window ledges, gargoyles, etc.).
+This phase is a strategic pivot: instead of committing to a single visual identity, the game becomes a Crazy Climber-style platform with multiple selectable maps and characters. Each map's "step" is thematic architecture (NY window ledges, tree branches in Arborea, gargoyles, etc.).
 
 ### Architecture (foundation)
 
@@ -57,14 +57,6 @@ This phase is a strategic pivot: instead of committing to a single visual identi
 - [x] Selection persisted via localStorage
 - [x] ESC during a run returns to the menu (devtest convenience)
 - [x] GameOverScene routes AGAIN (replay) or MENU (re-select)
-
-### First map: Favela
-
-- [x] Step = colored rooftop with decorations (water tank, antenna, clothesline, satellite dish)
-- [x] BG layers: warm sunset gradient over hills with Cristo silhouette and floating haze
-- [x] Palette: warm tropical
-- [ ] Themed pickups: açaí (coin), guaraná (super), folha (lunar), saquinho (mystery)
-- [ ] Music: funk melódico / samba (placeholder until commissioned)
 
 ### First character: generic climber
 
