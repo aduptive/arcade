@@ -25,6 +25,9 @@ export class GameScene extends Phaser.Scene {
   private stars!: Phaser.GameObjects.Graphics
   private startY = 0
   private autoScrollActive = false
+  private runStartTime = 0 // ms — preenchido quando auto-scroll dispara
+  private elapsedMs = 0
+  private timeText!: Phaser.GameObjects.Text
 
   constructor() {
     super({ key: 'GameScene' })
@@ -33,6 +36,8 @@ export class GameScene extends Phaser.Scene {
   create() {
     this.startY = GAME_HEIGHT - 150
     this.autoScrollActive = false
+    this.runStartTime = 0
+    this.elapsedMs = 0
     this.inputMgr = new InputManager(this)
     this.cameras.main.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 1000000)
 
@@ -101,6 +106,23 @@ export class GameScene extends Phaser.Scene {
     })
     this.scoreText.setScrollFactor(0)
     this.scoreText.setShadow(2, 2, '#000', 0, true, true)
+
+    this.timeText = this.add.text(GAME_WIDTH - 20, 20, 'TEMPO: 0:00', {
+      fontFamily: 'Courier New, monospace',
+      fontSize: '22px',
+      color: '#f5f5f5',
+      fontStyle: 'bold',
+    })
+    this.timeText.setOrigin(1, 0)
+    this.timeText.setScrollFactor(0)
+    this.timeText.setShadow(2, 2, '#000', 0, true, true)
+  }
+
+  private formatTime(ms: number): string {
+    const totalSec = Math.floor(ms / 1000)
+    const min = Math.floor(totalSec / 60)
+    const sec = totalSec % 60
+    return `${min}:${sec.toString().padStart(2, '0')}`
   }
 
   update(_t: number, dt: number) {
@@ -119,9 +141,14 @@ export class GameScene extends Phaser.Scene {
     if (this.player.x < -PLAYER_SIZE / 2) this.player.x = GAME_WIDTH + PLAYER_SIZE / 2
     if (this.player.x > GAME_WIDTH + PLAYER_SIZE / 2) this.player.x = -PLAYER_SIZE / 2
 
-    // Auto-scroll só começa depois que o player sobe pelo primeiro step.
+    // Auto-scroll (e timer) só começam depois que o player sobe pelo primeiro step.
     if (!this.autoScrollActive && this.player.y < this.startY - 50) {
       this.autoScrollActive = true
+      this.runStartTime = this.time.now
+    }
+    if (this.runStartTime > 0) {
+      this.elapsedMs = this.time.now - this.runStartTime
+      this.timeText.setText(`TEMPO: ${this.formatTime(this.elapsedMs)}`)
     }
 
     // ---- Câmera: auto-scroll híbrido ----
@@ -155,7 +182,10 @@ export class GameScene extends Phaser.Scene {
     // ---- Game over ----
     // Player caiu fora da tela OU foi engolido pelo auto-scroll por baixo.
     if (this.player.y > cam.scrollY + GAME_HEIGHT + DEATH_ZONE_PADDING) {
-      this.scene.start('GameOverScene', { score: Math.max(0, this.score) })
+      this.scene.start('GameOverScene', {
+        score: Math.max(0, this.score),
+        timeMs: this.elapsedMs,
+      })
     }
   }
 }

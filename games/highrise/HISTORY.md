@@ -1,5 +1,19 @@
 # Highrise — History
 
+## 2026-05-16 — Tracking de tempo + nova Phase 5 "Scoring & Hall of Fame"
+
+- Adicionado tracking de tempo de corrida em `GameScene`: começa no mesmo trigger do auto-scroll (player subiu pelo primeiro step), para no game over.
+- HUD ganhou `TEMPO: m:ss` no canto superior direito.
+- `GameOverScene` recebe `{ score, timeMs }` e mostra os dois.
+- **Roadmap reorganizado:**
+  - Phase 1 — core feel (auto-scroll + permadeath + tracking de tempo) ← atual
+  - Phase 2 — curva de dificuldade por nível
+  - Phase 3 — pickups (double jump, super jump, shield, multiplier)
+  - Phase 4 — combo system
+  - **Phase 5 (NOVA) — Scoring & Hall of Fame:** fórmula composta de score (provável: `altura × 10 + tempo × 2 + bestCombo × 50 + pickups × 25` — calibrar), local leaderboard top-10 em localStorage, tela de Hall of Fame acessível do menu inicial / game over.
+  - Phase 6 — vestido (era 5)
+- Razão da nova phase: scoring justo precisa de combo e pickups travados pra fórmula ter peso real. Por isso vem **depois** delas, não antes.
+
 ## 2026-05-16 — Phase 1 tuning: auto-scroll começa após o 1º step
 
 - Feedback do user após jogar: feel da Phase 1 ficou "perfeito", mas auto-scroll ativando desde o frame 1 dá pressão antes do jogo "começar de verdade".
