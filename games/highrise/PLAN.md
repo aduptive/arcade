@@ -23,10 +23,11 @@
 - [x] Air control split into same-direction and reverse-direction acceleration
 - [x] Ground velocity carries into the air (ground=air max speed = 320)
 - [x] Air input is small relative to ground commitment (Icy-Tower-style)
+- [x] Action button is dedicated super-jump (no normal-jump fallback)
+- [x] World pickups: coin, super, lunar gravity, mystery box
 - [ ] Double jump — second jump while airborne, for recovery
-- [ ] Shield — single fall save
-- [ ] Score multiplier — temporary 2× scoring
-- [ ] World pickups spawning on steps as an alternative ability source
+- [ ] Shield — single fall save (could be a new pickup or a cooldown ability)
+- [ ] Score multiplier pickup — temporary 2× scoring
 
 ## Phase 4 — Combo system
 

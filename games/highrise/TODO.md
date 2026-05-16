@@ -2,15 +2,16 @@
 
 ## In flight
 
-- [x] Validate the new Icy-Tower-style air control — confirmed great by the user (reached level 9)
-- [ ] Validate the dedicated-super-jump input model (action = super-only, no normal-jump fallback)
+- [ ] Validate the new pickup system end-to-end (spawning, collection, effects, HUD, mystery box outcomes)
+- [ ] Tune pickup spawn chance (currently 15% per step) and the mystery box distribution after a few runs
 - [ ] Validate the dynamic canvas size and smooth rendering on the user's screen
-- [ ] Implement world pickups (gems) for bonus points — next up after the canvas/rendering check
 - [ ] Decide whether to also add the Icy Tower jump-HEIGHT bonus from horizontal speed
 - [ ] When/if we want to allow wider canvases (>600), implement a spawn-aware step generator that respects max jump distance from the previous step
 
 ## Recently done
 
+- [x] World pickups: coin, super, lunar gravity, mystery box (with random outcomes)
+- [x] Dynamic canvas size + smooth (non-pixelated) rendering
 - [x] Make `action` a dedicated super-jump input (no normal-jump fallback)
 - [x] Icy-Tower-style air control: ground velocity carries into the air, air input is small
 - [x] Air drag for fine-tap precision

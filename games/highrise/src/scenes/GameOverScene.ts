@@ -6,10 +6,10 @@ export class GameOverScene extends Phaser.Scene {
     super({ key: 'GameOverScene' })
   }
 
-  create(data: { score?: number; timeMs?: number }) {
+  create(data: { score?: number; timeMs?: number; points?: number }) {
     this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.75).setOrigin(0)
 
-    const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 90, 'CAIU', {
+    const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 110, 'CAIU', {
       fontFamily: 'Courier New, monospace',
       fontSize: '64px',
       color: '#ff6b35',
@@ -20,7 +20,7 @@ export class GameOverScene extends Phaser.Scene {
 
     const score = this.add.text(
       GAME_WIDTH / 2,
-      GAME_HEIGHT / 2 - 10,
+      GAME_HEIGHT / 2 - 30,
       `ALTURA: ${data?.score ?? 0} m`,
       {
         fontFamily: 'Courier New, monospace',
@@ -30,9 +30,21 @@ export class GameOverScene extends Phaser.Scene {
     )
     score.setOrigin(0.5)
 
+    const pts = this.add.text(
+      GAME_WIDTH / 2,
+      GAME_HEIGHT / 2 + 5,
+      `PONTOS: ${data?.points ?? 0}`,
+      {
+        fontFamily: 'Courier New, monospace',
+        fontSize: '20px',
+        color: '#ffd700',
+      }
+    )
+    pts.setOrigin(0.5)
+
     const time = this.add.text(
       GAME_WIDTH / 2,
-      GAME_HEIGHT / 2 + 25,
+      GAME_HEIGHT / 2 + 40,
       `TEMPO: ${formatTime(data?.timeMs ?? 0)}`,
       {
         fontFamily: 'Courier New, monospace',
@@ -42,7 +54,7 @@ export class GameOverScene extends Phaser.Scene {
     )
     time.setOrigin(0.5)
 
-    const hint = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 100, '[ TOQUE OU TECLA PRA SUBIR DE NOVO ]', {
+    const hint = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 110, '[ TOQUE OU TECLA PRA SUBIR DE NOVO ]', {
       fontFamily: 'Courier New, monospace',
       fontSize: '12px',
       color: '#aaaaaa',

@@ -1,6 +1,13 @@
 import Phaser from 'phaser'
 import { GAME_WIDTH, GAME_HEIGHT } from '../main'
 import { InputManager } from '@shared/input/InputManager'
+import {
+  createPickup,
+  PICKUP_HOVER_OFFSET,
+  PICKUP_SPAWN_CHANCE,
+  randomPickupType,
+  type PickupType,
+} from '../game/Pickup'
 
 const PLATFORM_HEIGHT = 16
 const PLAYER_SIZE = 28
@@ -64,6 +71,12 @@ export class GameScene extends Phaser.Scene {
   private superText!: Phaser.GameObjects.Text
   private superJumpCharges = 0
   private chargeTimerMs = 0 // ms acumulados desde a última carga ganha (zera ao ganhar; congela em max)
+  private pointsText!: Phaser.GameObjects.Text
+  private effectText!: Phaser.GameObjects.Text
+  private points = 0
+  private pickups!: Phaser.Physics.Arcade.StaticGroup
+  private baseGravityY = 0
+  private gravityEffect: { name: 'lunar' | 'heavy'; expiresAt: number } | null = null
 
   constructor() {
     super({ key: 'GameScene' })
@@ -77,17 +90,24 @@ export class GameScene extends Phaser.Scene {
     this.currentLevel = 1
     this.superJumpCharges = 0
     this.chargeTimerMs = 0
+    this.points = 0
+    this.gravityEffect = null
     this.inputMgr = new InputManager(this)
     this.cameras.main.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 1000000)
-    // Bounds do mundo físico: laterais em 0..GAME_WIDTH (collision real),
-    // verticais bem distantes (não afetam — player morre muito antes).
     this.physics.world.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 2000000)
+    this.baseGravityY = this.physics.world.gravity.y
+    this.physics.world.gravity.y = this.baseGravityY // reset in case of scene restart
 
     this.drawBackground()
     this.platforms = this.physics.add.staticGroup()
+    this.pickups = this.physics.add.staticGroup()
     this.spawnInitialPlatforms()
     this.createPlayer()
     this.drawHUD()
+
+    this.physics.add.overlap(this.player, this.pickups, (_player, pickup) => {
+      this.collectPickup(pickup as Phaser.GameObjects.Rectangle)
+    })
   }
 
   private drawBackground() {
@@ -108,13 +128,21 @@ export class GameScene extends Phaser.Scene {
 
   private spawnInitialPlatforms() {
     const cfg = getLevelConfig(0)
-    this.addPlatform(GAME_WIDTH / 2, GAME_HEIGHT - 60, GAME_WIDTH, true) // chão inicial
+    this.addPlatform(GAME_WIDTH / 2, GAME_HEIGHT - 60, GAME_WIDTH, true) // initial floor — never carries a pickup
     for (let y = GAME_HEIGHT - 180; y > -2000; y -= cfg.verticalGap) {
       const halfW = cfg.stepWidth / 2
       const x = Phaser.Math.Between(halfW + 10, GAME_WIDTH - halfW - 10)
       this.addPlatform(x, y, cfg.stepWidth)
+      this.maybeSpawnPickupAbove(x, y)
       this.highestPlatformY = y
     }
+  }
+
+  private maybeSpawnPickupAbove(x: number, y: number) {
+    if (Math.random() > PICKUP_SPAWN_CHANCE) return
+    const type = randomPickupType()
+    const pickup = createPickup(this, x, y - PICKUP_HOVER_OFFSET, type)
+    this.pickups.add(pickup)
   }
 
   private addPlatform(x: number, y: number, width = 96, isFloor = false) {
@@ -163,7 +191,15 @@ export class GameScene extends Phaser.Scene {
     this.scoreText.setScrollFactor(0)
     this.scoreText.setShadow(2, 2, '#000', 0, true, true)
 
-    this.levelText = this.add.text(20, 50, 'NÍVEL 1', {
+    this.pointsText = this.add.text(20, 48, 'PONTOS: 0', {
+      fontFamily: 'Courier New, monospace',
+      fontSize: '16px',
+      color: '#ffd700',
+    })
+    this.pointsText.setScrollFactor(0)
+    this.pointsText.setShadow(1, 1, '#000', 0, true, true)
+
+    this.levelText = this.add.text(20, 70, 'NÍVEL 1', {
       fontFamily: 'Courier New, monospace',
       fontSize: '14px',
       color: '#c9a96b',
@@ -171,13 +207,22 @@ export class GameScene extends Phaser.Scene {
     this.levelText.setScrollFactor(0)
     this.levelText.setShadow(1, 1, '#000', 0, true, true)
 
-    this.superText = this.add.text(20, 70, 'SUPER: x0', {
+    this.superText = this.add.text(20, 90, 'SUPER: x0', {
       fontFamily: 'Courier New, monospace',
       fontSize: '14px',
       color: '#7ad4ff',
     })
     this.superText.setScrollFactor(0)
     this.superText.setShadow(1, 1, '#000', 0, true, true)
+
+    this.effectText = this.add.text(20, 110, '', {
+      fontFamily: 'Courier New, monospace',
+      fontSize: '14px',
+      color: '#a07acc',
+      fontStyle: 'bold',
+    })
+    this.effectText.setScrollFactor(0)
+    this.effectText.setShadow(1, 1, '#000', 0, true, true)
 
     this.timeText = this.add.text(GAME_WIDTH - 20, 20, 'TEMPO: 0:00', {
       fontFamily: 'Courier New, monospace',
@@ -188,6 +233,160 @@ export class GameScene extends Phaser.Scene {
     this.timeText.setOrigin(1, 0)
     this.timeText.setScrollFactor(0)
     this.timeText.setShadow(2, 2, '#000', 0, true, true)
+  }
+
+  // ---- Pickups ----
+
+  private collectPickup(rect: Phaser.GameObjects.Rectangle) {
+    const type = rect.getData('pickupType') as PickupType | undefined
+    if (!type) return
+    // Stop further overlaps and animate out
+    const body = rect.body as Phaser.Physics.Arcade.StaticBody | null
+    if (body) body.enable = false
+    this.applyPickup(type)
+    this.tweens.add({
+      targets: rect,
+      scale: 1.6,
+      alpha: 0,
+      duration: 180,
+      ease: 'Cubic.easeOut',
+      onComplete: () => rect.destroy(),
+    })
+  }
+
+  private applyPickup(type: PickupType) {
+    switch (type) {
+      case 'coin':
+        this.addPoints(50)
+        this.flashNotification('+50', '#ffd700')
+        break
+      case 'super':
+        if (this.gainSuperCharge()) {
+          this.flashNotification('+1 SUPER', '#7ad4ff')
+        } else {
+          this.flashNotification('SUPER CHEIO', '#7ad4ff')
+        }
+        break
+      case 'lunar':
+        this.setGravityEffect('lunar', 0.5, 10000)
+        this.flashNotification('LUNAR', '#a07acc')
+        break
+      case 'mystery':
+        this.applyMystery()
+        break
+    }
+  }
+
+  private applyMystery() {
+    // Weighted bag: 3 good, 3 neutral-ish, 2 bad
+    const outcomes: Array<'super' | 'lunar' | 'big' | 'small' | 'nothing' | 'heavy' | 'lose_super'> = [
+      'super',
+      'lunar',
+      'big',
+      'small',
+      'small',
+      'nothing',
+      'heavy',
+      'lose_super',
+    ]
+    const pick = outcomes[Math.floor(Math.random() * outcomes.length)]
+    switch (pick) {
+      case 'super':
+        this.gainSuperCharge()
+        this.flashNotification('? +1 SUPER', '#7ad4ff')
+        break
+      case 'lunar':
+        this.setGravityEffect('lunar', 0.5, 10000)
+        this.flashNotification('? LUNAR', '#a07acc')
+        break
+      case 'big':
+        this.addPoints(200)
+        this.flashNotification('? +200 PTS', '#ffd700')
+        break
+      case 'small':
+        this.addPoints(50)
+        this.flashNotification('? +50 PTS', '#ffd700')
+        break
+      case 'nothing':
+        this.flashNotification('? NADA', '#aaaaaa')
+        break
+      case 'heavy':
+        this.setGravityEffect('heavy', 1.7, 5000)
+        this.flashNotification('? HEAVY!', '#c4503a')
+        break
+      case 'lose_super':
+        if (this.superJumpCharges > 0) {
+          this.superJumpCharges--
+          this.flashNotification('? -1 SUPER', '#c4503a')
+        } else {
+          this.flashNotification('? ESCAPOU', '#aaaaaa')
+        }
+        break
+    }
+  }
+
+  private addPoints(n: number) {
+    this.points += n
+    this.pointsText.setText(`PONTOS: ${this.points}`)
+  }
+
+  private gainSuperCharge(): boolean {
+    if (this.superJumpCharges >= SUPER_JUMP_MAX_CHARGES) return false
+    this.superJumpCharges++
+    this.flashSuperGain()
+    return true
+  }
+
+  private setGravityEffect(name: 'lunar' | 'heavy', multiplier: number, durationMs: number) {
+    this.gravityEffect = { name, expiresAt: this.time.now + durationMs }
+    this.physics.world.gravity.y = this.baseGravityY * multiplier
+  }
+
+  private tickGravityEffect() {
+    if (!this.gravityEffect) {
+      this.effectText.setText('')
+      return
+    }
+    if (this.time.now >= this.gravityEffect.expiresAt) {
+      this.physics.world.gravity.y = this.baseGravityY
+      this.gravityEffect = null
+      this.effectText.setText('')
+      return
+    }
+    const remaining = Math.ceil((this.gravityEffect.expiresAt - this.time.now) / 1000)
+    const label = this.gravityEffect.name === 'lunar' ? 'LUNAR' : 'HEAVY'
+    const color = this.gravityEffect.name === 'lunar' ? '#a07acc' : '#c4503a'
+    this.effectText.setColor(color)
+    this.effectText.setText(`${label} ${remaining}s`)
+  }
+
+  private cleanupOffscreenPickups(scrollY: number) {
+    const cutoff = scrollY + GAME_HEIGHT + 50
+    this.pickups.children.iterate((child) => {
+      const p = child as Phaser.GameObjects.Rectangle | null
+      if (p && p.y > cutoff) p.destroy()
+      return true
+    })
+  }
+
+  private flashNotification(text: string, color: string) {
+    const t = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60, text, {
+      fontFamily: 'Courier New, monospace',
+      fontSize: '32px',
+      color,
+      fontStyle: 'bold',
+    })
+    t.setOrigin(0.5)
+    t.setScrollFactor(0)
+    t.setShadow(2, 2, '#000', 0, true, true)
+    this.tweens.add({
+      targets: t,
+      alpha: 0,
+      y: '-=24',
+      duration: 800,
+      ease: 'Cubic.easeOut',
+      onComplete: () => t.destroy(),
+    })
   }
 
   private updateSuperHUD() {
@@ -377,14 +576,22 @@ export class GameScene extends Phaser.Scene {
       const halfW = cfg.stepWidth / 2
       const x = Phaser.Math.Between(halfW + 10, GAME_WIDTH - halfW - 10)
       this.addPlatform(x, this.highestPlatformY, cfg.stepWidth)
+      this.maybeSpawnPickupAbove(x, this.highestPlatformY)
     }
+
+    // Pickups e efeitos: limpa o que saiu da tela e expira efeitos com timer
+    this.cleanupOffscreenPickups(cam.scrollY)
+    this.tickGravityEffect()
 
     // ---- Game over ----
     // Player caiu fora da tela OU foi engolido pelo auto-scroll por baixo.
     if (this.player.y > cam.scrollY + GAME_HEIGHT + DEATH_ZONE_PADDING) {
+      // Restore gravity before leaving the scene so the next run starts clean.
+      this.physics.world.gravity.y = this.baseGravityY
       this.scene.start('GameOverScene', {
         score: Math.max(0, this.score),
         timeMs: this.elapsedMs,
+        points: this.points,
       })
     }
   }

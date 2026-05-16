@@ -1,5 +1,23 @@
 # Highrise — History
 
+## 2026-05-17 — World pickups: coin, super, lunar gravity and mystery box
+
+- Phase 3 expanded with collectible pickups that spawn above procedural steps.
+- 4 pickup types, weighted random selection (per spawn roll, 15% per non-floor step):
+  - `coin` (gold, 60%) — instant +50 points
+  - `super` (cyan, 20%) — +1 super-jump charge (capped at max)
+  - `lunar` (purple, 12%) — gravity x 0.5 for 10s (floaty jumps)
+  - `mystery` (yellow `?`, 8%) — random outcome (see below)
+- Mystery roll outcomes (uniform from a fixed bag of 8):
+  - Good: +1 super charge, lunar 10s, +200 points
+  - Neutral-ish: +50 points (x2), nothing
+  - Bad: heavy gravity (x1.7) 5s, lose 1 super charge
+- New points counter independent of altitude. HUD shows `PONTOS` alongside `ALTURA`. Active gravity effect shown as `LUNAR Ms` / `HEAVY Ms`.
+- Gravity effects mutate `physics.world.gravity.y` directly against a captured `baseGravityY`. Only one gravity effect can be active at a time; a new one overrides. Game over also restores gravity to avoid bleed between runs.
+- Pickups are static-body diamonds (rotated rectangles) with a slow rotation tween. Off-screen pickups (below camera + 50px) are cleaned up each frame to avoid leaks.
+- Collected pickup tween: scale 1.6 + fade out 180ms, then destroy.
+- Game over screen now displays altitude, points and time.
+
 ## 2026-05-17 — Dynamic canvas size and smooth rendering
 
 - User asked for the board to fill the screen and for the graphics to look better (less pixelated).
