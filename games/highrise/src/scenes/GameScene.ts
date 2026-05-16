@@ -128,6 +128,15 @@ export class GameScene extends Phaser.Scene {
   /** Time (`this.time.now`) when 'left' began being pressed, or 0 if not held. */
   private leftHeldSince = 0
   private rightHeldSince = 0
+  /**
+   * Dev affordance: meters added to the displayed/internal score so that
+   * `getLevelConfig` returns level-N configuration from the first frame.
+   * Set via the `startLevel` scene data (passed by MenuScene from a
+   * `?level=N` URL parameter).
+   */
+  private scoreOffset = 0
+  /** Stored so GameOver can preserve it across AGAIN. */
+  private startLevel = 1
   private mapTheme!: MapTheme
   private characterSkin!: CharacterSkin
   /** Tracks the last-spawned step's center X and width so the next step can be constrained within reach. */
@@ -144,9 +153,17 @@ export class GameScene extends Phaser.Scene {
     super({ key: 'GameScene' })
   }
 
-  init(data: { mapId?: string; characterId?: string }) {
+  init(data: { mapId?: string; characterId?: string; startLevel?: number }) {
     this.mapTheme = getMapById(data?.mapId ?? DEFAULT_MAP_ID)
     this.characterSkin = getCharacterById(data?.characterId ?? DEFAULT_CHARACTER_ID)
+    const requested = data?.startLevel
+    if (requested && Number.isFinite(requested) && requested >= 2 && requested <= MAX_LEVEL) {
+      this.startLevel = Math.floor(requested)
+      this.scoreOffset = (this.startLevel - 1) * METERS_PER_LEVEL
+    } else {
+      this.startLevel = 1
+      this.scoreOffset = 0
+    }
     // Apply the map's background color to the camera so it shows behind any
     // gaps in the painted background.
     this.cameras.main?.setBackgroundColor(this.mapTheme.backgroundColor)
@@ -158,7 +175,8 @@ export class GameScene extends Phaser.Scene {
     this.autoScrollActive = false
     this.runStartTime = 0
     this.elapsedMs = 0
-    this.currentLevel = 1
+    this.score = this.scoreOffset
+    this.currentLevel = getLevelConfig(this.scoreOffset).level
     this.superJumpCharges = 0
     this.chargeTimerMs = 0
     this.points = 0
@@ -203,7 +221,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawnInitialPlatforms() {
-    const cfg = getLevelConfig(0)
+    // Use the score offset so level-N dev runs spawn level-N step config from
+    // the first platform.
+    const cfg = getLevelConfig(this.scoreOffset)
     this.addPlatform(GAME_WIDTH / 2, GAME_HEIGHT - 60, GAME_WIDTH, true) // initial floor — never carries a pickup
     for (let y = GAME_HEIGHT - 180; y > -2000; y -= cfg.verticalGap) {
       const x = this.pickReachableStepX(cfg.stepWidth)
@@ -828,7 +848,7 @@ export class GameScene extends Phaser.Scene {
     // score = quão alto chegou
     if (this.player.y < this.highestPlayerY) {
       this.highestPlayerY = this.player.y
-      this.score = Math.floor((this.startY - this.highestPlayerY) / 32)
+      this.score = Math.floor((this.startY - this.highestPlayerY) / 32) + this.scoreOffset
       this.scoreText.setText(`ALTURA: ${Math.max(0, this.score)}m`)
     }
 
@@ -858,6 +878,7 @@ export class GameScene extends Phaser.Scene {
         points: this.points,
         mapId: this.mapTheme.id,
         characterId: this.characterSkin.id,
+        startLevel: this.startLevel > 1 ? this.startLevel : undefined,
       })
     }
   }

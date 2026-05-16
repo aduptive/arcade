@@ -269,6 +269,21 @@ export class MenuScene extends Phaser.Scene {
     this.scene.start('GameScene', {
       mapId: this.selectedMapId,
       characterId: this.selectedCharacterId,
+      startLevel: readDevStartLevel(),
     })
   }
+}
+
+/**
+ * Dev-only affordance: `?level=N` in the URL starts a run with the
+ * difficulty config of level N already applied (step width / gap / scroll
+ * speed all set as if the player had already reached that height). Useful
+ * for testing high-level behavior without grinding from the bottom.
+ */
+function readDevStartLevel(): number | undefined {
+  if (typeof window === 'undefined') return undefined
+  const param = new URLSearchParams(window.location.search).get('level')
+  const lvl = parseInt(param ?? '', 10)
+  if (Number.isFinite(lvl) && lvl >= 2 && lvl <= 10) return lvl
+  return undefined
 }

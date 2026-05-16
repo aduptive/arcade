@@ -12,6 +12,7 @@ export class GameOverScene extends Phaser.Scene {
     points?: number
     mapId?: string
     characterId?: string
+    startLevel?: number
   }) {
     this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.75).setOrigin(0)
 
@@ -67,7 +68,7 @@ export class GameOverScene extends Phaser.Scene {
       'AGAIN',
       0xff6b35,
       0xa6391c,
-      () => this.scene.start('GameScene', { mapId: data?.mapId, characterId: data?.characterId })
+      () => this.scene.start('GameScene', { mapId: data?.mapId, characterId: data?.characterId, startLevel: data?.startLevel })
     )
     const menuBtn = this.makeButton(
       GAME_WIDTH / 2 + 100,

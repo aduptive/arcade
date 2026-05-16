@@ -1,5 +1,15 @@
 # Highrise — History
 
+## 2026-05-17 — Dev affordance: `?level=N` URL param starts at difficulty N
+
+- Used `?level=9` in the URL to drop straight into level-9 difficulty without grinding from the bottom — handy for testing balance, spawn density and the new sprite animations at higher level.
+- MenuScene reads the param on `startGame()` and forwards `startLevel` to GameScene.
+- GameScene stores `scoreOffset = (startLevel - 1) * 50` and adds it to the displayed/internal score every frame, so `getLevelConfig` returns the right config immediately.
+- Initial floor and procedural step spawn already at level-N step width / vertical gap.
+- HUD shows the level number from frame 1; the usual level-up flash will fire as the player climbs past further thresholds.
+- AGAIN on GameOverScene preserves the startLevel so retries stay at the test difficulty.
+- Range is clamped to 2..10; invalid values fall back to a normal level-1 run.
+
 ## 2026-05-17 — Ground input deadband (taps only flip facing, never slide)
 
 - User feedback: even with acceleration-based ground movement, a deliberate "just turn around" tap on the keyboard or hold-zone still produced a small slide that could matter near a step edge.
