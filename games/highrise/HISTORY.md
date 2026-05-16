@@ -1,5 +1,11 @@
 # Highrise — History
 
+## 2026-05-17 — Tuning: AIR_ACCEL 2500 → 1500 (mais flutuante)
+
+- Feedback do user: 2500 fazia mudar direção rápido demais.
+- Tempo pra inverter de full speed pra full speed contrário: era ~0.43s, agora ~0.71s.
+- Pulo agora "compromete" mais com a direção — exige planejamento, recompensa precisão. Mais perto do feel de Icy Tower / Doodle Jump.
+
 ## 2026-05-17 — Fix de feel: controle horizontal preserva momentum no ar
 
 - Bug clássico: input horizontal sobrescrevia velocidade direto via `setVelocityX(0)` quando nada estava pressionado, fazendo o player parar bruscamente no ar.
