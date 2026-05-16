@@ -1,5 +1,13 @@
 # Highrise — History
 
+## 2026-05-17 — Phase 5: local leaderboard and Hall of Fame screen
+
+- New `shared/score/leaderboard.ts`: top-10 localStorage list shared across arcade games (each game keys its own list). Includes `computeScore(altura, pontos, bestCombo)` formula (altura×10 + pontos + bestCombo×50) and a `lastName` remembered between runs.
+- GameOverScene now computes the final score, shows it prominently, marks "NEW HIGH SCORE!" if it qualifies, and prompts for the player's name via the native browser prompt (ugly but works on every device; v2 can swap for a custom in-game input).
+- GameOverScene button bar widened to three: AGAIN / HOF / MENU.
+- New HallOfFameScene shows the top 10 with rank colors (gold/silver/bronze for podium), name, map+character meta, score, altura+combo breakdown. Empty-state message when there are no entries.
+- MenuScene gains a small "HOF >" link in the top-right corner, plus an `H` keyboard shortcut.
+
 ## 2026-05-17 — Phase 4: combo system
 
 - Each consecutive UPWARD step landing increments the combo counter. Landing on the same step or at equal/lower height ends the chain.

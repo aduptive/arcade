@@ -4,6 +4,7 @@ import { MenuScene } from './scenes/MenuScene'
 import { GameScene } from './scenes/GameScene'
 import { GameOverScene } from './scenes/GameOverScene'
 import { PauseScene } from './scenes/PauseScene'
+import { HallOfFameScene } from './scenes/HallOfFameScene'
 
 // Dynamic game canvas sizing.
 //
@@ -55,7 +56,7 @@ const config: Phaser.Types.Core.GameConfig = {
   input: {
     gamepad: true,
   },
-  scene: [BootScene, MenuScene, GameScene, GameOverScene, PauseScene],
+  scene: [BootScene, MenuScene, GameScene, GameOverScene, PauseScene, HallOfFameScene],
 }
 
 const game = new Phaser.Game(config)

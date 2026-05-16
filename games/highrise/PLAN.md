@@ -42,10 +42,10 @@
 
 ## Phase 5 — Scoring and Hall of Fame
 
-- [ ] Final score formula combining height, time, best combo and pickups
-- [ ] Local leaderboard via localStorage (top 10)
-- [ ] Hall of Fame screen accessible from main menu and game over
-- [ ] Optional name entry on a new high score
+- [x] Final score formula combining height, points and best combo (time deferred)
+- [x] Local leaderboard via localStorage (top 10) — shared/score/leaderboard.ts
+- [x] Hall of Fame screen accessible from main menu (HOF link) and game over (HOF button)
+- [x] Name entry on a new high score (browser prompt + remembered last name)
 
 ## Phase 6 — Multi-map / Crazy Climber architecture
 

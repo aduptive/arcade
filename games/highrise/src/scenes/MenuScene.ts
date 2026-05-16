@@ -119,9 +119,35 @@ export class MenuScene extends Phaser.Scene {
     // ---- PLAY button ----
     this.renderPlayButton()
 
+    // Hall of Fame link, small, top-right corner of the menu.
+    this.renderHallOfFameLink()
+
     // Keyboard shortcut
     this.input.keyboard?.on('keydown-ENTER', () => this.startGame())
     this.input.keyboard?.on('keydown-SPACE', () => this.startGame())
+    this.input.keyboard?.on('keydown-H', () => this.openHallOfFame())
+  }
+
+  private renderHallOfFameLink() {
+    const link = this.add.text(GAME_WIDTH - 20, 24, 'HOF >', {
+      fontFamily: 'Courier New, monospace',
+      fontSize: '14px',
+      color: '#ffd93d',
+      fontStyle: 'bold',
+    })
+    link.setOrigin(1, 0)
+    link.setLetterSpacing(2)
+    link.setInteractive({ useHandCursor: true })
+    link.on('pointerover', () => link.setColor('#ffffff'))
+    link.on('pointerout', () => link.setColor('#ffd93d'))
+    link.on('pointerdown', () => this.openHallOfFame())
+  }
+
+  private openHallOfFame() {
+    this.scene.start('HallOfFameScene', {
+      mapId: this.selectedMapId,
+      characterId: this.selectedCharacterId,
+    })
   }
 
   private renderMapCards(yTop: number) {

@@ -1,5 +1,14 @@
 import Phaser from 'phaser'
 import { GAME_WIDTH, GAME_HEIGHT } from '../main'
+import {
+  computeScore,
+  getLastName,
+  isHighScore,
+  saveEntry,
+  setLastName,
+} from '@shared/score/leaderboard'
+
+const GAME_ID = 'highrise'
 
 export class GameOverScene extends Phaser.Scene {
   constructor() {
@@ -15,75 +24,118 @@ export class GameOverScene extends Phaser.Scene {
     characterId?: string
     startLevel?: number
   }) {
-    this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.75).setOrigin(0)
+    const altura = data?.score ?? 0
+    const pontos = data?.points ?? 0
+    const bestCombo = data?.bestCombo ?? 0
+    const timeMs = data?.timeMs ?? 0
+    const finalScore = computeScore(altura, pontos, bestCombo)
+    const qualifies = isHighScore(GAME_ID, finalScore) && finalScore > 0
 
-    const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 160, 'CAIU', {
+    this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.78).setOrigin(0)
+
+    const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 200, 'CAIU', {
       fontFamily: 'Courier New, monospace',
-      fontSize: '60px',
+      fontSize: '54px',
       color: '#ff6b35',
       fontStyle: 'bold',
     })
     title.setOrigin(0.5)
     title.setShadow(2, 2, '#000', 4, true, true)
 
-    const lineHeight = 30
-    let rowY = GAME_HEIGHT / 2 - 90
-
-    const score = this.add.text(GAME_WIDTH / 2, rowY, `ALTURA: ${data?.score ?? 0} m`, {
+    const subtitle = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 158, `SCORE  ${finalScore}`, {
       fontFamily: 'Courier New, monospace',
-      fontSize: '22px',
-      color: '#f5f5f5',
+      fontSize: '26px',
+      color: qualifies ? '#ffd93d' : '#f5f5f5',
+      fontStyle: 'bold',
     })
-    score.setOrigin(0.5)
-    rowY += lineHeight
+    subtitle.setOrigin(0.5)
+    subtitle.setLetterSpacing(2)
 
-    const pts = this.add.text(GAME_WIDTH / 2, rowY, `PONTOS: ${data?.points ?? 0}`, {
-      fontFamily: 'Courier New, monospace',
-      fontSize: '20px',
-      color: '#ffd700',
-    })
-    pts.setOrigin(0.5)
-    rowY += lineHeight
-
-    if ((data?.bestCombo ?? 0) >= 2) {
-      const combo = this.add.text(GAME_WIDTH / 2, rowY, `MELHOR COMBO: x${data?.bestCombo}`, {
+    let rowY = GAME_HEIGHT / 2 - 110
+    const lineHeight = 28
+    const addRow = (label: string, value: string, color = '#f5f5f5') => {
+      const t = this.add.text(GAME_WIDTH / 2, rowY, `${label}: ${value}`, {
         fontFamily: 'Courier New, monospace',
         fontSize: '18px',
-        color: '#ff9a3c',
+        color,
       })
-      combo.setOrigin(0.5)
+      t.setOrigin(0.5)
       rowY += lineHeight
     }
+    addRow('ALTURA', `${altura} m`)
+    addRow('PONTOS', `${pontos}`, '#ffd700')
+    if (bestCombo >= 2) addRow('MELHOR COMBO', `x${bestCombo}`, '#ff9a3c')
+    addRow('TEMPO', formatTime(timeMs), '#c9a96b')
 
-    const time = this.add.text(GAME_WIDTH / 2, rowY, `TEMPO: ${formatTime(data?.timeMs ?? 0)}`, {
-      fontFamily: 'Courier New, monospace',
-      fontSize: '20px',
-      color: '#c9a96b',
-    })
-    time.setOrigin(0.5)
+    if (qualifies) {
+      this.handleHighScoreEntry(finalScore, altura, pontos, bestCombo, timeMs, data)
+    }
 
-    // Two-button bottom bar: AGAIN replays the same map/character, MENU goes back to selection.
-    const againBtn = this.makeButton(
-      GAME_WIDTH / 2 - 100,
-      GAME_HEIGHT / 2 + 90,
-      'AGAIN',
-      0xff6b35,
-      0xa6391c,
-      () => this.scene.start('GameScene', { mapId: data?.mapId, characterId: data?.characterId, startLevel: data?.startLevel })
+    // Three-button bar: AGAIN replays same map/character, HOF opens leaderboard, MENU back to selection.
+    const buttonsY = GAME_HEIGHT / 2 + 110
+
+    const againBtn = this.makeButton(GAME_WIDTH / 2 - 110, buttonsY, 'AGAIN', 0xff6b35, 0xa6391c, () =>
+      this.scene.start('GameScene', {
+        mapId: data?.mapId,
+        characterId: data?.characterId,
+        startLevel: data?.startLevel,
+      })
     )
-    const menuBtn = this.makeButton(
-      GAME_WIDTH / 2 + 100,
-      GAME_HEIGHT / 2 + 90,
-      'MENU',
-      0x4a4a4a,
-      0x222222,
-      () => this.scene.start('MenuScene', { mapId: data?.mapId, characterId: data?.characterId })
+    this.makeButton(GAME_WIDTH / 2, buttonsY, 'HOF', 0xffd93d, 0xa68800, () =>
+      this.scene.start('HallOfFameScene', { mapId: data?.mapId, characterId: data?.characterId })
+    )
+    const menuBtn = this.makeButton(GAME_WIDTH / 2 + 110, buttonsY, 'MENU', 0x4a4a4a, 0x222222, () =>
+      this.scene.start('MenuScene', { mapId: data?.mapId, characterId: data?.characterId })
     )
 
-    // Keyboard shortcuts
     this.input.keyboard?.once('keydown-ENTER', () => againBtn.emit('pointerdown'))
     this.input.keyboard?.once('keydown-SPACE', () => againBtn.emit('pointerdown'))
     this.input.keyboard?.once('keydown-ESC', () => menuBtn.emit('pointerdown'))
+  }
+
+  /**
+   * Saves a high score and prompts the player for their name. Uses the
+   * browser's native prompt() — ugly but works on every device. v2 can swap
+   * for a custom in-game name input.
+   */
+  private handleHighScoreEntry(
+    score: number,
+    altura: number,
+    pontos: number,
+    bestCombo: number,
+    timeMs: number,
+    data: { mapId?: string; characterId?: string }
+  ) {
+    const badge = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 40, 'NEW HIGH SCORE!', {
+      fontFamily: 'Courier New, monospace',
+      fontSize: '16px',
+      color: '#ffd93d',
+      fontStyle: 'bold',
+    })
+    badge.setOrigin(0.5)
+    badge.setLetterSpacing(3)
+
+    // Defer the prompt one tick so the UI paints before the modal blocks.
+    this.time.delayedCall(120, () => {
+      const fallback = getLastName(GAME_ID, 'PLAYER')
+      const input =
+        typeof window !== 'undefined' && typeof window.prompt === 'function'
+          ? window.prompt('NEW HIGH SCORE! Enter your name:', fallback)
+          : fallback
+      const name = (input ?? fallback).trim() || fallback
+      setLastName(GAME_ID, name)
+      saveEntry(GAME_ID, {
+        name,
+        score,
+        altura,
+        pontos,
+        bestCombo,
+        timeMs,
+        mapId: data?.mapId ?? 'default',
+        characterId: data?.characterId ?? 'default',
+        dateIso: new Date().toISOString(),
+      })
+    })
   }
 
   private makeButton(
@@ -94,14 +146,14 @@ export class GameOverScene extends Phaser.Scene {
     stroke: number,
     onClick: () => void
   ): Phaser.GameObjects.Container {
-    const w = 160
-    const h = 50
+    const w = 100
+    const h = 46
     const container = this.add.container(x, y)
     const bg = this.add.rectangle(0, 0, w, h, fill)
     bg.setStrokeStyle(2, stroke)
     const txt = this.add.text(0, 0, label, {
       fontFamily: 'Courier New, monospace',
-      fontSize: '20px',
+      fontSize: '18px',
       color: '#ffffff',
       fontStyle: 'bold',
     })
