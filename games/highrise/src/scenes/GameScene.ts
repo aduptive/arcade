@@ -30,6 +30,15 @@ const AIR_ACCEL_REVERSE = 2500 // px/s^2 — input opposes current motion
 const AIR_DRAG = 400 // px/s^2 — passive deceleration when no input in air
 const DEATH_ZONE_PADDING = 30
 
+/**
+ * Maximum horizontal gap, in pixels, between the right edge of the previous
+ * step and the left edge of the next (or vice-versa). Keeps the procedural
+ * spawn within the player's reachable jump distance. With current physics
+ * (max ~400px horizontal jump), 180 leaves comfortable margin even at the
+ * smallest step width (level 10).
+ */
+const MAX_HORIZONTAL_GAP_BETWEEN_STEPS = 180
+
 // Super jump (Phase 3 — cooldown-based)
 // Mechanic: same initial impulse as a normal jump, but for the next few
 // seconds the player's effective gravity is reduced, producing a rocket-like
@@ -85,6 +94,9 @@ export class GameScene extends Phaser.Scene {
   private dropThroughUntil = 0 // absolute time when the platform drop-through window ends
   private mapTheme!: MapTheme
   private characterSkin!: CharacterSkin
+  /** Tracks the last-spawned step's center X and width so the next step can be constrained within reach. */
+  private lastStepX = 0
+  private lastStepWidth = 0
   private pointsText!: Phaser.GameObjects.Text
   private effectText!: Phaser.GameObjects.Text
   private points = 0
@@ -150,8 +162,7 @@ export class GameScene extends Phaser.Scene {
     const cfg = getLevelConfig(0)
     this.addPlatform(GAME_WIDTH / 2, GAME_HEIGHT - 60, GAME_WIDTH, true) // initial floor — never carries a pickup
     for (let y = GAME_HEIGHT - 180; y > -2000; y -= cfg.verticalGap) {
-      const halfW = cfg.stepWidth / 2
-      const x = Phaser.Math.Between(halfW + 10, GAME_WIDTH - halfW - 10)
+      const x = this.pickReachableStepX(cfg.stepWidth)
       this.addPlatform(x, y, cfg.stepWidth)
       this.maybeSpawnPickupAbove(x, y)
       this.highestPlatformY = y
@@ -179,7 +190,27 @@ export class GameScene extends Phaser.Scene {
     const body = (plat as any).body as Phaser.Physics.Arcade.StaticBody
     body.setSize(width, PLATFORM_HEIGHT)
     body.updateFromGameObject()
+    // Remember this step so the next spawn can stay within reach.
+    this.lastStepX = x
+    this.lastStepWidth = width
     return plat
+  }
+
+  /**
+   * Picks a horizontal position for a new step that is guaranteed to be within
+   * the player's jump reach from the previous step, while still respecting the
+   * wall constraints of the play area.
+   */
+  private pickReachableStepX(newStepWidth: number): number {
+    const halfW = newStepWidth / 2
+    const wallMinX = halfW + 10
+    const wallMaxX = GAME_WIDTH - halfW - 10
+    const prevHalfW = this.lastStepWidth / 2
+    const reach = prevHalfW + halfW + MAX_HORIZONTAL_GAP_BETWEEN_STEPS
+    const minX = Math.max(wallMinX, this.lastStepX - reach)
+    const maxX = Math.min(wallMaxX, this.lastStepX + reach)
+    if (maxX <= minX) return Phaser.Math.Clamp(this.lastStepX, wallMinX, wallMaxX)
+    return Phaser.Math.Between(minX, maxX)
   }
 
   private createPlayer() {
@@ -630,8 +661,7 @@ export class GameScene extends Phaser.Scene {
     // spawnar mais steps acima conforme sobe — usa config corrente
     while (this.highestPlatformY > cam.scrollY - 200) {
       this.highestPlatformY -= cfg.verticalGap
-      const halfW = cfg.stepWidth / 2
-      const x = Phaser.Math.Between(halfW + 10, GAME_WIDTH - halfW - 10)
+      const x = this.pickReachableStepX(cfg.stepWidth)
       this.addPlatform(x, this.highestPlatformY, cfg.stepWidth)
       this.maybeSpawnPickupAbove(x, this.highestPlatformY)
     }

@@ -1,5 +1,13 @@
 # Highrise — History
 
+## 2026-05-17 — Reachability constraint on step spawn
+
+- User-reported bug: at higher levels (narrower steps) and on wider canvases (post 480 → 600 cap), two consecutive steps could spawn on opposite walls — gap larger than the player's maximum horizontal jump. Unwinnable instant death.
+- Fix: tracked `lastStepX` and `lastStepWidth` on every `addPlatform` call. New helper `pickReachableStepX(width)` clamps the spawn so the gap between previous-step-edge and next-step-edge never exceeds `MAX_HORIZONTAL_GAP_BETWEEN_STEPS = 180 px`.
+- With current physics (max ~400px horizontal jump) and the smallest step width (50 px at level 10), 180px gap leaves comfortable margin for imperfect approaches.
+- Wall constraints still take precedence — `pickReachableStepX` clamps to wall bounds first, then to reach.
+- Floor is treated like a very wide previous step (its width is `GAME_WIDTH`), so the first procedural step above the floor has effectively no reach constraint — only wall bounds — which is correct since the player can take off from anywhere on the floor.
+
 ## 2026-05-17 — Multi-map architecture shipped (Default + Favela + NY) + MenuScene
 
 Architectural refactor from the strategic pivot landed in a single overnight session, with the gameplay loop staying identical the entire time.

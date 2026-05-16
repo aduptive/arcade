@@ -12,6 +12,7 @@
 
 ## Recently done
 
+- [x] Reachability constraint on step spawn (max 180px gap, no more impossible jumps on wider canvases)
 - [x] Multi-map architecture: MapTheme + CharacterSkin + MenuScene + generic GameScene
 - [x] Three maps shipped: Default (night sky), Favela (rooftops with decorations), NY (window ledges, Crazy Climber homage)
 - [x] Three characters shipped: Cubinho (orange), Climber (blue), Capivara (brown)
