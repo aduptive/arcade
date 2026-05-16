@@ -1,5 +1,12 @@
 # Highrise — History
 
+## 2026-05-17 — Pause: ESC now pauses; HUD pause button; PauseScene overlay
+
+- ESC used to bail straight to the main menu without saving the run state — too aggressive. Now ESC pauses the game and overlays a `PauseScene` with RESUME / MENU buttons.
+- New `PauseScene` (launched via `scene.launch` + `scene.pause` of GameScene) dims the screen, shows PAUSED, and exposes both buttons + keyboard shortcuts (ESC/SPACE = resume, M = menu).
+- New HUD pause button (circle with "II" glyph) in the top-right under the timer — primary input on mobile where there's no ESC key. Visible on desktop too for consistency.
+- ESC handler switched from `once` to `on` so it works for every pause cycle, not just the first.
+
 ## 2026-05-17 — Fix: TileSprite buffer error on desktop + add JUMP/SUPER buttons on mobile
 
 - **Desktop bug:** "Cannot allocate a buffer of this size" thrown by NY and Arborea maps. Root cause: I sized the `paintStructure` TileSprite as `widthxN` with N = 2,000,000, which made WebGL try to allocate a multi-gigabyte render buffer. WebGL has hard size limits per dimension.

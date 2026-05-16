@@ -167,16 +167,10 @@ export class GameScene extends Phaser.Scene {
     // swipes in the upper area keep firing jump / super-jump as before.
     new MobileControls(this, this.inputMgr)
 
-    // Convenience: ESC bails out of a run back to the menu without dying.
-    // Useful for cycling through maps and characters quickly.
-    this.input.keyboard?.once('keydown-ESC', () => {
-      // Restore gravity in case a per-body offset or world override is active.
-      this.physics.world.gravity.y = this.baseGravityY
-      this.scene.start('MenuScene', {
-        mapId: this.mapTheme.id,
-        characterId: this.characterSkin.id,
-      })
-    })
+    // ESC opens the pause overlay (PauseScene runs on top while GameScene is
+    // paused). From the pause overlay the player can resume or jump to menu.
+    // Mobile users get the same flow via the HUD pause button.
+    this.input.keyboard?.on('keydown-ESC', () => this.openPause())
   }
 
   private spawnInitialPlatforms() {
@@ -328,6 +322,34 @@ export class GameScene extends Phaser.Scene {
     this.timeText.setOrigin(1, 0)
     this.timeText.setScrollFactor(0)
     this.timeText.setShadow(2, 2, '#000', 0, true, true)
+
+    // Pause button (top-right corner, below the time). Visible on every device;
+    // mobile users especially need this since they don't have an ESC key.
+    const pauseCx = GAME_WIDTH - 28
+    const pauseCy = 62
+    const pauseBg = this.add.circle(pauseCx, pauseCy, 18, 0x222222, 0.75)
+    pauseBg.setStrokeStyle(2, 0xaaaaaa, 0.9)
+    pauseBg.setScrollFactor(0).setDepth(10_002).setInteractive({ useHandCursor: true })
+    pauseBg.on('pointerdown', () => this.openPause())
+    pauseBg.on('pointerover', () => pauseBg.setFillStyle(0x444444, 0.85))
+    pauseBg.on('pointerout', () => pauseBg.setFillStyle(0x222222, 0.75))
+    const pauseGlyph = this.add.text(pauseCx, pauseCy, 'II', {
+      fontFamily: 'Courier New, monospace',
+      fontSize: '16px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    })
+    pauseGlyph.setOrigin(0.5)
+    pauseGlyph.setScrollFactor(0).setDepth(10_003)
+  }
+
+  private openPause() {
+    if (this.scene.isPaused()) return
+    this.scene.pause()
+    this.scene.launch('PauseScene', {
+      mapId: this.mapTheme.id,
+      characterId: this.characterSkin.id,
+    })
   }
 
   // ---- Pickups ----
