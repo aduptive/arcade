@@ -71,27 +71,26 @@ export const arboreaMap: MapTheme = {
     motes.setScrollFactor(0.5)
   },
 
-  paintStructure: ({ scene, width }) => {
-    // The trunk: a tiled bark texture stretched infinitely up.
+  paintStructure: ({ scene, width, height }) => {
+    // The trunk: a tiled bark texture rendered at screen size, with
+    // `tilePositionY` shifted each frame to match the camera scroll. This
+    // produces an "infinitely tall" trunk without the WebGL buffer-allocation
+    // limits that a literally huge TileSprite would hit.
     const TILE_KEY = 'arborea-trunk-tile'
     const TILE_W = 64
     const TILE_H = 64
     if (!scene.textures.exists(TILE_KEY)) {
       const g = scene.add.graphics()
-      // base bark color
       g.fillStyle(0x4a2e1a, 1)
       g.fillRect(0, 0, TILE_W, TILE_H)
-      // darker vertical grooves
       g.fillStyle(0x2a1810, 1)
       g.fillRect(6, 0, 3, TILE_H)
       g.fillRect(28, 0, 2, TILE_H)
       g.fillRect(48, 0, 3, TILE_H)
-      // lighter highlights
       g.fillStyle(0x6e4226, 1)
       g.fillRect(14, 0, 2, TILE_H)
       g.fillRect(38, 0, 2, TILE_H)
       g.fillRect(56, 0, 2, TILE_H)
-      // a knot / circular detail at random spot
       g.fillStyle(0x2a1810, 1)
       g.fillCircle(22, 30, 5)
       g.fillStyle(0x4a2e1a, 1)
@@ -101,16 +100,18 @@ export const arboreaMap: MapTheme = {
     }
 
     const trunkWidth = Math.min(width * 0.55, 360)
-    const trunkTotalHeight = 2_000_000
-    const trunk = scene.add.tileSprite(
-      width / 2,
-      0,
-      trunkWidth,
-      trunkTotalHeight,
-      TILE_KEY
-    )
+    const trunk = scene.add.tileSprite(width / 2, height / 2, trunkWidth, height + 100, TILE_KEY)
     trunk.setOrigin(0.5, 0.5)
+    trunk.setScrollFactor(0)
     trunk.setAlpha(0.95)
+
+    const updateTile = () => {
+      trunk.tilePositionY = scene.cameras.main.scrollY
+    }
+    scene.events.on(Phaser.Scenes.Events.UPDATE, updateTile)
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      scene.events.off(Phaser.Scenes.Events.UPDATE, updateTile)
+    })
   },
 
   paintStep: ({ scene, x, y, width, height, isFloor }) => {

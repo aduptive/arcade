@@ -1,5 +1,13 @@
 # Highrise — History
 
+## 2026-05-17 — Fix: TileSprite buffer error on desktop + add JUMP/SUPER buttons on mobile
+
+- **Desktop bug:** "Cannot allocate a buffer of this size" thrown by NY and Arborea maps. Root cause: I sized the `paintStructure` TileSprite as `widthxN` with N = 2,000,000, which made WebGL try to allocate a multi-gigabyte render buffer. WebGL has hard size limits per dimension.
+- **Fix:** TileSprite is now sized to the screen (`height + 100`), pinned with `setScrollFactor(0)`, and shifts `tilePositionY = camera.scrollY` on every `UPDATE` event. Visual result is identical (the pattern appears to scroll infinitely upward), but cost is constant. Cleanup hook on `SHUTDOWN` removes the listener.
+- **Mobile bug:** the bottom-strip hold zones swallowed all touches in the lower half, leaving no obvious way to jump (top half still worked, but undiscoverable).
+- **Fix:** redesigned the bottom strip into three columns. Left and right still hold to move. Middle column has two visible buttons: a large orange JUMP button and a smaller cyan SUPER button above it, both with press feedback (alpha shift on down). Buttons use `setVirtualPressed`; `justPressed` semantics naturally fire jump on tap.
+- Arrow hints relabeled to `<` and `>` (ASCII, render reliably across iOS Safari).
+
 ## 2026-05-17 — Mobile on-screen movement controls (left/right hold zones)
 
 - User reported on iPhone: tap = jump works, but no way to move left or right because swipe-based touch only fires once per gesture (no sustained press).

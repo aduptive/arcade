@@ -57,28 +57,25 @@ export const nyMap: MapTheme = {
     moon.setScrollFactor(0.4)
   },
 
-  paintStructure: ({ scene, width }) => {
-    // Glass-tower wall behind the ledges. Generated tile texture (32x48) is
-    // tiled vertically by a TileSprite stretched to a very tall extent — way
-    // beyond any reachable camera position — so the climber always has a
-    // believable "tower" behind them.
+  paintStructure: ({ scene, width, height }) => {
+    // Glass-tower wall behind the ledges. A 32x48 tile texture is generated
+    // procedurally, then displayed by a screen-sized TileSprite. Each frame
+    // we shift `tilePositionY` to match the camera's scroll so the pattern
+    // appears to roll past at 1:1 speed — equivalent to "infinitely tall"
+    // without allocating an absurd render buffer.
     const TILE_KEY = 'ny-tower-tile'
     const TILE_W = 32
     const TILE_H = 48
     if (!scene.textures.exists(TILE_KEY)) {
       const g = scene.add.graphics()
-      // wall background
       g.fillStyle(0x1a2545, 1)
       g.fillRect(0, 0, TILE_W, TILE_H)
-      // window with darker frame
       g.fillStyle(0x14264a, 1)
       g.fillRect(6, 8, 20, 28)
-      // lit window pane (warm yellow) with a slight reflection
       g.fillStyle(0x4d6a99, 0.55)
       g.fillRect(8, 10, 16, 24)
       g.fillStyle(0xffd47a, 0.18)
       g.fillRect(10, 12, 5, 20)
-      // floor divider line
       g.fillStyle(0x0a1224, 1)
       g.fillRect(0, TILE_H - 2, TILE_W, 2)
       g.generateTexture(TILE_KEY, TILE_W, TILE_H)
@@ -86,16 +83,18 @@ export const nyMap: MapTheme = {
     }
 
     const towerWidth = Math.min(width - 24, 540)
-    const towerTotalHeight = 2_000_000 // covers any reachable y position
-    const tower = scene.add.tileSprite(
-      width / 2,
-      0,
-      towerWidth,
-      towerTotalHeight,
-      TILE_KEY
-    )
+    const tower = scene.add.tileSprite(width / 2, height / 2, towerWidth, height + 100, TILE_KEY)
     tower.setOrigin(0.5, 0.5)
+    tower.setScrollFactor(0)
     tower.setAlpha(0.85)
+
+    const updateTile = () => {
+      tower.tilePositionY = scene.cameras.main.scrollY
+    }
+    scene.events.on(Phaser.Scenes.Events.UPDATE, updateTile)
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      scene.events.off(Phaser.Scenes.Events.UPDATE, updateTile)
+    })
   },
 
   paintStep: ({ scene, x, y, width, height, isFloor }) => {
