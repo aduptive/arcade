@@ -638,6 +638,8 @@ export class GameScene extends Phaser.Scene {
         score: Math.max(0, this.score),
         timeMs: this.elapsedMs,
         points: this.points,
+        mapId: this.mapTheme.id,
+        characterId: this.characterSkin.id,
       })
     }
   }

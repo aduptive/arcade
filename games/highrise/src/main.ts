@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { BootScene } from './scenes/BootScene'
+import { MenuScene } from './scenes/MenuScene'
 import { GameScene } from './scenes/GameScene'
 import { GameOverScene } from './scenes/GameOverScene'
 
@@ -50,7 +51,7 @@ const config: Phaser.Types.Core.GameConfig = {
   input: {
     gamepad: true,
   },
-  scene: [BootScene, GameScene, GameOverScene],
+  scene: [BootScene, MenuScene, GameScene, GameOverScene],
 }
 
 new Phaser.Game(config)
