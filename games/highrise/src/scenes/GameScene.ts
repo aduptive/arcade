@@ -10,7 +10,7 @@ const MOVE_SPEED = 320
 //   acelerar na direção atual (ou do zero) = rápido (responsivo)
 //   inverter a direção = lento (decisão pesa, recompensa precisão)
 const AIR_ACCEL_SAME = 5000 // px/s² — acelerando na direção atual ou do parado
-const AIR_ACCEL_REVERSE = 1500 // px/s² — invertendo direção
+const AIR_ACCEL_REVERSE = 3000 // px/s² — invertendo direção
 const DEATH_ZONE_PADDING = 30
 
 // Super jump (Phase 3 — cooldown-based)
