@@ -1,5 +1,12 @@
 # Highrise — History
 
+## 2026-05-17 — Ground input deadband (taps only flip facing, never slide)
+
+- User feedback: even with acceleration-based ground movement, a deliberate "just turn around" tap on the keyboard or hold-zone still produced a small slide that could matter near a step edge.
+- Added `GROUND_INPUT_DEADBAND_MS = 80`. Pressing left or right on the ground starts accumulating hold time; only after 80ms does the input begin applying acceleration. Below the threshold, friction keeps the player firmly at rest.
+- Facing direction (sprite flip) now derives from raw input rather than velocity, so a sub-deadband tap still flips the character instantly — gives the visual feedback the player expects.
+- When no input is held, facing falls back to velocity (so a moving player faces their direction of travel until they release).
+
 ## 2026-05-17 — Ground movement now acceleration-based (brief taps barely move)
 
 - Reported regression after the body widened to 40px: when standing near the edge of a narrow step, a quick direction tap could slide the player off because horizontal velocity was set instantly to ±320 px/s on key press.

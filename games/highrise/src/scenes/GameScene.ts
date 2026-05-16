@@ -41,16 +41,17 @@ const PLAYER_BODY_FOOT_INSET = 6
 const JUMP_VELOCITY = -780
 const GROUND_MAX_SPEED = 320 // max horizontal speed on the ground (responsive)
 /**
- * Ground horizontal acceleration. With this in place, briefly tapping a
- * direction key only nudges the player a few pixels — enough to flip facing
- * but not enough to slide off a narrow step. Holding the key still ramps up
- * to GROUND_MAX_SPEED quickly.
+ * Holding a direction starts moving the player only after this deadband.
+ * Below the threshold, the press only flips the character's facing (visual
+ * mirror) — useful for adjusting orientation without sliding off a step.
  */
-const GROUND_ACCEL = 1800 // px/s^2 — from rest toward MAX in the held direction
+const GROUND_INPUT_DEADBAND_MS = 80
+/** Ground acceleration toward GROUND_MAX_SPEED, applied after the deadband. */
+const GROUND_ACCEL = 1800
 /** Reversing direction on the ground feels snappier than starting from rest. */
-const GROUND_DECEL_REVERSE = 3000 // px/s^2 — when input opposes current motion
-/** Aggressive friction on the ground when no input — so taps decay fast. */
-const GROUND_FRICTION = 4000 // px/s^2 — decay applied when no horizontal input
+const GROUND_DECEL_REVERSE = 3000
+/** Aggressive friction on the ground when no input — so residual velocity decays fast. */
+const GROUND_FRICTION = 4000
 const AIR_MAX_SPEED = 320 // max horizontal speed in the air (matches ground so launch velocity carries)
 // Icy-Tower-style air control: ground velocity is the real resource, air input
 // only nudges. Players are rewarded for committing on the ground before takeoff.
@@ -124,6 +125,9 @@ export class GameScene extends Phaser.Scene {
   private chargeTimerMs = 0 // ms acumulados desde a última carga ganha (zera ao ganhar; congela em max)
   private superBoostUntil = 0 // absolute time when the sustained super-jump boost ends
   private dropThroughUntil = 0 // absolute time when the platform drop-through window ends
+  /** Time (`this.time.now`) when 'left' began being pressed, or 0 if not held. */
+  private leftHeldSince = 0
+  private rightHeldSince = 0
   private mapTheme!: MapTheme
   private characterSkin!: CharacterSkin
   /** Tracks the last-spawned step's center X and width so the next step can be constrained within reach. */
@@ -161,6 +165,8 @@ export class GameScene extends Phaser.Scene {
     this.gravityEffect = null
     this.superBoostUntil = 0
     this.dropThroughUntil = 0
+    this.leftHeldSince = 0
+    this.rightHeldSince = 0
     this.inputMgr = new InputManager(this)
     this.cameras.main.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 1000000)
     this.physics.world.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 2000000)
@@ -591,7 +597,15 @@ export class GameScene extends Phaser.Scene {
       state = 'idle'
     }
 
-    const facing: -1 | 0 | 1 = vx < -10 ? -1 : vx > 10 ? 1 : 0
+    // Facing flips immediately on input so a quick tap can re-orient the
+    // sprite even when the ground deadband has suppressed actual movement.
+    // Fall back to velocity for momentum reads when no input is held.
+    let facing: -1 | 0 | 1 = 0
+    if (this.inputMgr.isPressed('left')) facing = -1
+    else if (this.inputMgr.isPressed('right')) facing = 1
+    else if (vx < -10) facing = -1
+    else if (vx > 10) facing = 1
+
     this.characterSkin.updateAnimation({ gameObject: this.player, state, facing })
   }
 
@@ -663,23 +677,41 @@ export class GameScene extends Phaser.Scene {
   update(_t: number, dt: number) {
     this.inputMgr.update()
 
+    // Track how long each direction has been held — used by the ground
+    // deadband to distinguish "I'm just turning around" from "I want to move".
+    const now = this.time.now
+    const wantsLeftRaw = this.inputMgr.isPressed('left')
+    const wantsRightRaw = this.inputMgr.isPressed('right')
+    if (wantsLeftRaw) {
+      if (this.leftHeldSince === 0) this.leftHeldSince = now
+    } else {
+      this.leftHeldSince = 0
+    }
+    if (wantsRightRaw) {
+      if (this.rightHeldSince === 0) this.rightHeldSince = now
+    } else {
+      this.rightHeldSince = 0
+    }
+
     // Horizontal movement:
-    //   - On ground: acceleration-based. Brief taps barely move the player
-    //     (so a quick direction change near a step edge doesn't slide them
-    //     off), while holding ramps up to GROUND_MAX_SPEED quickly. Friction
-    //     when no input is held returns the player to rest fast.
+    //   - On ground: acceleration-based, gated by a deadband so brief taps
+    //     only flip facing (handled in updatePlayerAnimation) without
+    //     actually moving the body. Holding past the deadband ramps up to
+    //     GROUND_MAX_SPEED. Friction returns the player to rest fast.
     //   - In air: preserves momentum; input only accelerates, never replaces
     //     velocity. Releasing the key in mid-air keeps the launched motion.
     const onGround = this.playerBody.blocked.down
     const dtSec = Math.min(dt, 100) / 1000
     if (onGround) {
+      const leftHeldLong =
+        wantsLeftRaw && now - this.leftHeldSince >= GROUND_INPUT_DEADBAND_MS
+      const rightHeldLong =
+        wantsRightRaw && now - this.rightHeldSince >= GROUND_INPUT_DEADBAND_MS
       let vx = this.playerBody.velocity.x
-      const wantsLeft = this.inputMgr.isPressed('left')
-      const wantsRight = this.inputMgr.isPressed('right')
-      if (wantsLeft) {
+      if (leftHeldLong) {
         const accel = vx > 0 ? GROUND_DECEL_REVERSE : GROUND_ACCEL
         vx -= accel * dtSec
-      } else if (wantsRight) {
+      } else if (rightHeldLong) {
         const accel = vx < 0 ? GROUND_DECEL_REVERSE : GROUND_ACCEL
         vx += accel * dtSec
       } else {
