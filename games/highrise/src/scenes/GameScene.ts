@@ -60,6 +60,9 @@ export class GameScene extends Phaser.Scene {
     this.currentLevel = 1
     this.inputMgr = new InputManager(this)
     this.cameras.main.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 1000000)
+    // Bounds do mundo físico: laterais em 0..GAME_WIDTH (collision real),
+    // verticais bem distantes (não afetam — player morre muito antes).
+    this.physics.world.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 2000000)
 
     this.drawBackground()
     this.platforms = this.physics.add.staticGroup()
@@ -111,7 +114,7 @@ export class GameScene extends Phaser.Scene {
     this.player.setStrokeStyle(2, 0xa6391c)
     this.physics.add.existing(this.player)
     this.playerBody = this.player.body as Phaser.Physics.Arcade.Body
-    this.playerBody.setCollideWorldBounds(false)
+    this.playerBody.setCollideWorldBounds(true) // colide com paredes laterais
     this.highestPlayerY = this.player.y
 
     // platforms são "one-way": só colidem quando o player está caindo.
@@ -211,9 +214,7 @@ export class GameScene extends Phaser.Scene {
       this.playerBody.setVelocityY(JUMP_VELOCITY)
     }
 
-    // screen wrap horizontal
-    if (this.player.x < -PLAYER_SIZE / 2) this.player.x = GAME_WIDTH + PLAYER_SIZE / 2
-    if (this.player.x > GAME_WIDTH + PLAYER_SIZE / 2) this.player.x = -PLAYER_SIZE / 2
+    // (sem screen-wrap — o player colide nas paredes laterais via world bounds)
 
     // Trigger do auto-scroll vem do collider (primeiro pouso em step não-floor).
     if (this.runStartTime > 0) {

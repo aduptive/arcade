@@ -1,5 +1,11 @@
 # Highrise — History
 
+## 2026-05-17 — Removido screen-wrap, paredes laterais reais
+
+- Antes: player atravessava a borda (Pac-Man style) — ficou cringe.
+- Agora: `physics.world.setBounds(0, -1e6, GAME_WIDTH, GAME_HEIGHT + 2e6)` + `playerBody.setCollideWorldBounds(true)`.
+- Bounds verticais são propositalmente distantes: não interferem (player morre muito antes de tocá-los), só as laterais importam.
+
 ## 2026-05-16 — Phase 2: curva de dificuldade por altura
 
 - `getLevelConfig(heightM)` deriva 3 parâmetros que escalam com a altura: `stepWidth`, `verticalGap`, `scrollSpeed`. Interpolação **contínua** (linear) entre nível 1 (heightM = 0) e máximo (heightM = 500).
