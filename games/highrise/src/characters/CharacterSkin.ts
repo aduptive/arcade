@@ -14,6 +14,12 @@ export interface CharacterPaintArgs {
   size: number
 }
 
+/** GameObjects we know how to use as the player: transform + arcade body capable. */
+export type CharacterGameObject =
+  | Phaser.GameObjects.Rectangle
+  | Phaser.GameObjects.Sprite
+  | Phaser.GameObjects.Image
+
 export interface CharacterSkin {
   /** Stable id used for selection and persistence. */
   id: string
@@ -23,7 +29,10 @@ export interface CharacterSkin {
   /**
    * Creates the visual game object for the character at the given position.
    * Must return a single GameObject — it will receive an arcade physics body
-   * and be used as the player throughout the scene.
+   * and be used as the player throughout the scene. The body's logical size
+   * is set by GameScene to PLAYER_SIZE x PLAYER_SIZE regardless of the
+   * sprite's art dimensions, so the visual can be slightly larger or smaller
+   * without affecting collisions.
    */
-  paintCharacter: (args: CharacterPaintArgs) => Phaser.GameObjects.Rectangle
+  paintCharacter: (args: CharacterPaintArgs) => CharacterGameObject
 }

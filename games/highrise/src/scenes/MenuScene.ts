@@ -165,8 +165,16 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private renderCharacterCards(yTop: number) {
-    const cardSize = 60
-    const gap = 14
+    // Auto-shrink cards as the number of characters grows so they fit the
+    // screen width without overlap.
+    const idealCardSize = 60
+    const idealGap = 14
+    const horizontalMargin = 30
+    const availableWidth = GAME_WIDTH - horizontalMargin * 2
+    const idealTotal = ALL_CHARACTERS.length * idealCardSize + (ALL_CHARACTERS.length - 1) * idealGap
+    const scale = idealTotal > availableWidth ? availableWidth / idealTotal : 1
+    const cardSize = Math.max(36, Math.floor(idealCardSize * scale))
+    const gap = Math.max(4, Math.floor(idealGap * scale))
     const totalWidth = ALL_CHARACTERS.length * cardSize + (ALL_CHARACTERS.length - 1) * gap
     const startX = (GAME_WIDTH - totalWidth) / 2 + cardSize / 2
 
@@ -175,16 +183,12 @@ export class MenuScene extends Phaser.Scene {
       const y = yTop + cardSize / 2
       const container = this.add.container(x, y)
 
-      // Live preview via paintCharacter at a smaller size.
-      // We do paint to a relative position 0,0 of the container by computing
-      // world coords and using setPosition trick: paintCharacter wants absolute
-      // scene coords. We add the visual then move it into the container.
+      // Live preview via paintCharacter at the card's size.
       const visual = char.paintCharacter({ scene: this, x: 0, y: 0, size: cardSize - 16 })
-      const visualWorld = visual as Phaser.GameObjects.Rectangle
-      // Move the visual into the container so it scrolls / lives with the card.
+      // Move the visual into the container so it lives with the card.
       // paintCharacter added it to the scene root; remove and add to container.
-      this.children.remove(visualWorld, false)
-      container.add(visualWorld)
+      this.children.remove(visual as Phaser.GameObjects.GameObject, false)
+      container.add(visual as Phaser.GameObjects.GameObject)
 
       const outline = this.add.rectangle(0, 0, cardSize + 6, cardSize + 6)
       outline.setStrokeStyle(3, 0xffd93d, 0)

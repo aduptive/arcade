@@ -12,6 +12,7 @@ import { DEFAULT_MAP_ID, getMapById, type MapTheme } from '../maps'
 import {
   DEFAULT_CHARACTER_ID,
   getCharacterById,
+  type CharacterGameObject,
   type CharacterSkin,
 } from '../characters'
 
@@ -73,7 +74,7 @@ function getLevelConfig(heightM: number): LevelConfig {
 
 export class GameScene extends Phaser.Scene {
   private inputMgr!: InputManager
-  private player!: Phaser.GameObjects.Rectangle
+  private player!: CharacterGameObject
   private playerBody!: Phaser.Physics.Arcade.Body
   private platforms!: Phaser.Physics.Arcade.StaticGroup
   private highestPlatformY = 0
@@ -222,6 +223,13 @@ export class GameScene extends Phaser.Scene {
     })
     this.physics.add.existing(this.player)
     this.playerBody = this.player.body as Phaser.Physics.Arcade.Body
+    // Force the body to PLAYER_SIZE regardless of the visual's intrinsic size,
+    // so collisions stay identical across sprites, rectangles and images.
+    this.playerBody.setSize(PLAYER_SIZE, PLAYER_SIZE)
+    this.playerBody.setOffset(
+      ((this.player.width ?? PLAYER_SIZE) - PLAYER_SIZE) / 2,
+      ((this.player.height ?? PLAYER_SIZE) - PLAYER_SIZE) / 2
+    )
     this.playerBody.setCollideWorldBounds(true) // colide com paredes laterais
     this.highestPlayerY = this.player.y
 
@@ -477,7 +485,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private flashSuperUsed() {
-    // Player pulsa pra dar leitura visual do super pulo
+    // Pulse the player for visual reading of the super-jump trigger.
     this.tweens.add({
       targets: this.player,
       scaleX: { from: 1.4, to: 1 },
@@ -485,12 +493,21 @@ export class GameScene extends Phaser.Scene {
       duration: 300,
       ease: 'Cubic.easeOut',
     })
-    // Também muda a cor brevemente
-    const originalFill = (this.player as Phaser.GameObjects.Rectangle).fillColor
-    ;(this.player as Phaser.GameObjects.Rectangle).setFillStyle(0x7ad4ff)
-    this.time.delayedCall(180, () => {
-      ;(this.player as Phaser.GameObjects.Rectangle).setFillStyle(originalFill)
-    })
+    // Brief color shift — implementation differs for rectangle vs sprite/image.
+    const p = this.player as unknown as {
+      fillColor?: number
+      setFillStyle?: (color: number) => void
+      setTint?: (color: number) => void
+      clearTint?: () => void
+    }
+    if (typeof p.setFillStyle === 'function' && typeof p.fillColor === 'number') {
+      const originalFill = p.fillColor
+      p.setFillStyle(0x7ad4ff)
+      this.time.delayedCall(180, () => p.setFillStyle?.(originalFill))
+    } else if (typeof p.setTint === 'function') {
+      p.setTint(0x7ad4ff)
+      this.time.delayedCall(180, () => p.clearTint?.())
+    }
   }
 
   private flashLevelUp(level: number) {
