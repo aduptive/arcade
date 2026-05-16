@@ -1,5 +1,12 @@
 # Highrise — History
 
+## 2026-05-16 — Trigger do auto-scroll: pouso real, não decolagem
+
+- Antes: auto-scroll disparava quando `player.y < startY - 50` — ativava no ar durante o primeiro pulo, antes de pousar.
+- Agora: dispara no **collider callback** quando o player encosta num step que **não é o `isFloor`** (chão inicial). Marca o chão com `setData('isFloor', true)` no `addPlatform()`.
+- Mesmo trigger que liga o timer de tempo de corrida.
+- Razão: feedback do user — pressão deve começar quando ele de fato pousou no primeiro degrau, não quando começou a pular.
+
 ## 2026-05-16 — Tracking de tempo + nova Phase 5 "Scoring & Hall of Fame"
 
 - Adicionado tracking de tempo de corrida em `GameScene`: começa no mesmo trigger do auto-scroll (player subiu pelo primeiro step), para no game over.

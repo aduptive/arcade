@@ -65,7 +65,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawnInitialPlatforms() {
-    this.addPlatform(GAME_WIDTH / 2, GAME_HEIGHT - 60, GAME_WIDTH)
+    this.addPlatform(GAME_WIDTH / 2, GAME_HEIGHT - 60, GAME_WIDTH, true) // chão inicial
     for (let y = GAME_HEIGHT - 180; y > -2000; y -= PLATFORM_VERTICAL_GAP) {
       const x = Phaser.Math.Between(PLATFORM_WIDTH / 2 + 10, GAME_WIDTH - PLATFORM_WIDTH / 2 - 10)
       this.addPlatform(x, y)
@@ -73,9 +73,10 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private addPlatform(x: number, y: number, width = PLATFORM_WIDTH) {
+  private addPlatform(x: number, y: number, width = PLATFORM_WIDTH, isFloor = false) {
     const plat = this.add.rectangle(x, y, width, PLATFORM_HEIGHT, 0x6fb04a)
     plat.setStrokeStyle(2, 0x3d6d28)
+    if (isFloor) plat.setData('isFloor', true)
     this.platforms.add(plat)
     const body = (plat as any).body as Phaser.Physics.Arcade.StaticBody
     body.setSize(width, PLATFORM_HEIGHT)
@@ -91,10 +92,21 @@ export class GameScene extends Phaser.Scene {
     this.playerBody.setCollideWorldBounds(false)
     this.highestPlayerY = this.player.y
 
-    // platforms são "one-way": só colidem quando o player está caindo
-    this.physics.add.collider(this.player, this.platforms, undefined, () => {
-      return this.playerBody.velocity.y > 0
-    })
+    // platforms são "one-way": só colidem quando o player está caindo.
+    // No primeiro pouso em step não-floor, dispara o auto-scroll e o timer.
+    this.physics.add.collider(
+      this.player,
+      this.platforms,
+      (_p, platform) => {
+        if (this.autoScrollActive) return
+        const obj = platform as Phaser.GameObjects.GameObject
+        if (!obj.getData('isFloor')) {
+          this.autoScrollActive = true
+          this.runStartTime = this.time.now
+        }
+      },
+      () => this.playerBody.velocity.y > 0
+    )
   }
 
   private drawHUD() {
@@ -141,11 +153,7 @@ export class GameScene extends Phaser.Scene {
     if (this.player.x < -PLAYER_SIZE / 2) this.player.x = GAME_WIDTH + PLAYER_SIZE / 2
     if (this.player.x > GAME_WIDTH + PLAYER_SIZE / 2) this.player.x = -PLAYER_SIZE / 2
 
-    // Auto-scroll (e timer) só começam depois que o player sobe pelo primeiro step.
-    if (!this.autoScrollActive && this.player.y < this.startY - 50) {
-      this.autoScrollActive = true
-      this.runStartTime = this.time.now
-    }
+    // Trigger do auto-scroll vem do collider (primeiro pouso em step não-floor).
     if (this.runStartTime > 0) {
       this.elapsedMs = this.time.now - this.runStartTime
       this.timeText.setText(`TEMPO: ${this.formatTime(this.elapsedMs)}`)
