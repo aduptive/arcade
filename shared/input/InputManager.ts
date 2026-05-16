@@ -27,10 +27,28 @@ export class InputManager {
   private gamepad: Phaser.Input.Gamepad.Gamepad | null = null
   private touchBuffer: GameAction[] = []
   private prevPressed = new Map<GameAction, boolean>()
+  /**
+   * Continuous virtual input state, driven externally (e.g. by on-screen mobile
+   * touch controls that need to hold a direction). Unlike `touchBuffer` which
+   * fires once per gesture, these stay pressed for as long as the consumer
+   * marks them true.
+   */
+  private virtualPressed: Record<GameAction, boolean> = {
+    left: false,
+    right: false,
+    up: false,
+    down: false,
+    action: false,
+  }
+  /** Touches that land below this y (on the scene's pointer events) are ignored
+   * by the swipe/tap detector, so dedicated virtual buttons in that area don't
+   * also fire a global jump on release. 0 disables the cutoff. */
+  private touchIgnoreBelowY = 0
 
   private touchStartX = 0
   private touchStartY = 0
   private touchStartTime = 0
+  private touchStartedInDeadZone = false
   private readonly SWIPE_THRESHOLD = 30
   private readonly TAP_TIME = 200
 
@@ -70,11 +88,17 @@ export class InputManager {
 
   private setupTouch() {
     this.scene.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      this.touchStartedInDeadZone =
+        this.touchIgnoreBelowY > 0 && p.y >= this.touchIgnoreBelowY
       this.touchStartX = p.x
       this.touchStartY = p.y
       this.touchStartTime = this.scene.time.now
     })
     this.scene.input.on('pointerup', (p: Phaser.Input.Pointer) => {
+      if (this.touchStartedInDeadZone) {
+        this.touchStartedInDeadZone = false
+        return
+      }
       const dx = p.x - this.touchStartX
       const dy = p.y - this.touchStartY
       const dt = this.scene.time.now - this.touchStartTime
@@ -91,6 +115,24 @@ export class InputManager {
         this.touchBuffer.push(dy > 0 ? 'action' : 'up')
       }
     })
+  }
+
+  /**
+   * Inject continuous virtual state for an action (used by on-screen mobile
+   * controls). Stays "pressed" until explicitly cleared.
+   */
+  setVirtualPressed(action: GameAction, pressed: boolean) {
+    this.virtualPressed[action] = pressed
+  }
+
+  /**
+   * Configure the swipe/tap detector to ignore touches that START at or below
+   * a given y. Use this to reserve a strip at the bottom of the screen for
+   * dedicated buttons (e.g. left/right hold zones) without those touches also
+   * firing a global jump on release.
+   */
+  setTouchIgnoreBelowY(y: number) {
+    this.touchIgnoreBelowY = y
   }
 
   update() {
@@ -123,6 +165,11 @@ export class InputManager {
       this.actions.get(a)!.pressed = true
     }
     this.touchBuffer = []
+
+    // Continuous virtual state (mobile on-screen buttons).
+    for (const a of ALL_ACTIONS) {
+      if (this.virtualPressed[a]) this.actions.get(a)!.pressed = true
+    }
 
     for (const a of ALL_ACTIONS) {
       const s = this.actions.get(a)!

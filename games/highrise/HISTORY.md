@@ -1,5 +1,13 @@
 # Highrise — History
 
+## 2026-05-17 — Mobile on-screen movement controls (left/right hold zones)
+
+- User reported on iPhone: tap = jump works, but no way to move left or right because swipe-based touch only fires once per gesture (no sustained press).
+- Added `MobileControls` to `shared/input/`: when running on a touch device, the bottom 35% of the screen becomes two hold zones (left half / right half) that drive `InputManager.virtualPressed` continuously. Dim ◀ / ▶ hints with a subtle divider make the zones discoverable.
+- Extended `InputManager` with `setVirtualPressed(action, bool)` for continuous virtual state and `setTouchIgnoreBelowY(y)` so the swipe/tap detector ignores touches that start inside the dedicated bottom strip. This prevents hold-then-release on a hold zone from also firing a global jump.
+- The top 65% of the screen keeps existing tap/swipe behavior: tap = jump, swipe down = super jump.
+- Auto-no-ops on desktop (no touch hardware). No visual or behavioral change for keyboard / gamepad players.
+
 ## 2026-05-17 — MapTheme gains a paintStructure layer; new Arborea map
 
 - User architectural insight: maps should have TWO background layers — a far parallax background AND a "structure" layer that scrolls 1:1 with the camera, tiles infinitely vertically, and represents the actual thing being climbed (the tower wall behind NY ledges, the trunk of a giant tree, etc.).

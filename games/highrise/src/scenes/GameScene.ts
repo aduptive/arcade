@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import { GAME_WIDTH, GAME_HEIGHT } from '../main'
 import { InputManager } from '@shared/input/InputManager'
+import { MobileControls } from '@shared/input/MobileControls'
 import {
   createPickup,
   PICKUP_HOVER_OFFSET,
@@ -148,6 +149,11 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.pickups, (_player, pickup) => {
       this.collectPickup(pickup as Phaser.GameObjects.Rectangle)
     })
+
+    // On-screen hold zones for mobile movement. Auto-no-ops on desktop. The
+    // bottom 35% of the screen becomes left/right hold zones, while taps and
+    // swipes in the upper area keep firing jump / super-jump as before.
+    new MobileControls(this, this.inputMgr)
 
     // Convenience: ESC bails out of a run back to the menu without dying.
     // Useful for cycling through maps and characters quickly.
