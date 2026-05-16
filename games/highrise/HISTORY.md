@@ -1,5 +1,16 @@
 # Highrise — History
 
+## 2026-05-17 — Super jump becomes a sustained boost + drop-through with `down`
+
+- User feedback: the super jump should feel like a force that lasts a couple of seconds, not just a higher instantaneous impulse.
+- Replaced the multiplier-based super (`JUMP_VELOCITY × 1.5`) with a sustained-lift mechanic:
+  - Initial impulse is the same as a normal jump (`JUMP_VELOCITY`), so the takeoff looks identical
+  - For `SUPER_JUMP_BOOST_DURATION_MS = 2000`, the player's per-body gravity is offset so the *effective* gravity is `worldG × SUPER_JUMP_BOOST_GRAVITY_FACTOR (0.2)`
+  - Reaches roughly twice the height of the old super; visually a rocket-like ascent
+  - Boost ends early if the player lands on a step mid-flight (intentional cancel)
+  - Stacks with lunar/heavy gravity pickups via per-body gravity offsets (we don't touch world gravity for the super)
+- Added drop-through with `down` (arrow down / S / gamepad down / swipe down — wait, swipe down is `action`; touch is keyboard/gamepad-only for now): while grounded, pressing `down` opens a 250ms window where platform collisions are suppressed and the player gets a small downward nudge to clear the current step. Lets the player drop a level to grab a pickup that was missed.
+
 ## 2026-05-17 — World pickups: coin, super, lunar gravity and mystery box
 
 - Phase 3 expanded with collectible pickups that spawn above procedural steps.

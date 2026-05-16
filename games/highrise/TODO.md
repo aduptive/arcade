@@ -10,6 +10,8 @@
 
 ## Recently done
 
+- [x] Super jump becomes a sustained 2s low-gravity boost instead of an instant 1.5x impulse
+- [x] Drop-through with `down` to reach pickups below the current step
 - [x] World pickups: coin, super, lunar gravity, mystery box (with random outcomes)
 - [x] Dynamic canvas size + smooth (non-pixelated) rendering
 - [x] Make `action` a dedicated super-jump input (no normal-jump fallback)

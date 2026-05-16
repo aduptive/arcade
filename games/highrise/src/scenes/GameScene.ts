@@ -25,8 +25,13 @@ const AIR_DRAG = 400 // px/s^2 — passive deceleration when no input in air
 const DEATH_ZONE_PADDING = 30
 
 // Super jump (Phase 3 — cooldown-based)
-const SUPER_JUMP_MULTIPLIER = 1.5 // velocidade do pulo, resulta em ~2.25× a altura
-const SUPER_JUMP_CHARGE_INTERVAL_MS = 60_000 // 1 carga por minuto
+// Mechanic: same initial impulse as a normal jump, but for the next few
+// seconds the player's effective gravity is reduced, producing a rocket-like
+// sustained lift. Stacks with lunar/heavy gravity pickups via per-player
+// gravity offsets instead of mutating world gravity.
+const SUPER_JUMP_BOOST_DURATION_MS = 2000
+const SUPER_JUMP_BOOST_GRAVITY_FACTOR = 0.2 // effective gravity multiplier while boosting
+const SUPER_JUMP_CHARGE_INTERVAL_MS = 60_000 // 1 charge per minute
 const SUPER_JUMP_MAX_CHARGES = 3
 
 // Phase 2: curva de dificuldade. Tudo deriva da altura atual.
@@ -71,6 +76,8 @@ export class GameScene extends Phaser.Scene {
   private superText!: Phaser.GameObjects.Text
   private superJumpCharges = 0
   private chargeTimerMs = 0 // ms acumulados desde a última carga ganha (zera ao ganhar; congela em max)
+  private superBoostUntil = 0 // absolute time when the sustained super-jump boost ends
+  private dropThroughUntil = 0 // absolute time when the platform drop-through window ends
   private pointsText!: Phaser.GameObjects.Text
   private effectText!: Phaser.GameObjects.Text
   private points = 0
@@ -92,6 +99,8 @@ export class GameScene extends Phaser.Scene {
     this.chargeTimerMs = 0
     this.points = 0
     this.gravityEffect = null
+    this.superBoostUntil = 0
+    this.dropThroughUntil = 0
     this.inputMgr = new InputManager(this)
     this.cameras.main.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 1000000)
     this.physics.world.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 2000000)
@@ -164,8 +173,10 @@ export class GameScene extends Phaser.Scene {
     this.playerBody.setCollideWorldBounds(true) // colide com paredes laterais
     this.highestPlayerY = this.player.y
 
-    // platforms são "one-way": só colidem quando o player está caindo.
-    // No primeiro pouso em step não-floor, dispara o auto-scroll e o timer.
+    // Platforms are one-way: only collide when the player is falling.
+    // During a drop-through window, collisions are also suppressed so the
+    // player can pass through the step they're standing on to reach a pickup
+    // below. On the first landing on a non-floor step, trigger auto-scroll.
     this.physics.add.collider(
       this.player,
       this.platforms,
@@ -177,7 +188,10 @@ export class GameScene extends Phaser.Scene {
           this.runStartTime = this.time.now
         }
       },
-      () => this.playerBody.velocity.y > 0
+      () => {
+        if (this.time.now < this.dropThroughUntil) return false
+        return this.playerBody.velocity.y > 0
+      }
     )
   }
 
@@ -500,20 +514,42 @@ export class GameScene extends Phaser.Scene {
       this.playerBody.setVelocityX(vx)
     }
 
-    // Jump:
-    //   - `up` (arrow up / W / gamepad up or A / tap) = always normal jump
-    //   - `action` (space / gamepad B / swipe down) = dedicated super jump:
-    //     consumes 1 charge if available; does nothing when out of charges.
-    //   No fallback from action to normal jump: the whole point is that the
-    //   super jump is an explicit, separate choice from the regular one.
+    // Jump (only when grounded):
+    //   - `up` = normal jump
+    //   - `action` = super jump: same initial impulse as a normal jump but
+    //     starts a sustained boost window; while it's active the player's
+    //     effective gravity is reduced, producing a rocket-like ascent.
+    //   - `down` = drop through the current step for a short window, used to
+    //     reach pickups sitting below the player's level.
     if (this.playerBody.blocked.down) {
       if (this.inputMgr.justPressed('action') && this.superJumpCharges > 0) {
-        this.playerBody.setVelocityY(JUMP_VELOCITY * SUPER_JUMP_MULTIPLIER)
+        this.playerBody.setVelocityY(JUMP_VELOCITY)
+        this.superBoostUntil = this.time.now + SUPER_JUMP_BOOST_DURATION_MS
         this.superJumpCharges--
         this.flashSuperUsed()
       } else if (this.inputMgr.justPressed('up')) {
         this.playerBody.setVelocityY(JUMP_VELOCITY)
+      } else if (this.inputMgr.justPressed('down')) {
+        this.dropThroughUntil = this.time.now + 250
+        this.playerBody.setVelocityY(60) // small nudge so the player clears the step
       }
+    }
+
+    // Apply / clear per-player gravity offset for the sustained super-jump boost.
+    // Uses Phaser's per-body gravity, which adds to world gravity, so we set
+    // it to (worldG * factor) - worldG = worldG * (factor - 1).
+    const inSuperBoost = this.time.now < this.superBoostUntil
+    if (inSuperBoost) {
+      // End early if the player landed mid-boost (intentional cancel).
+      if (this.playerBody.blocked.down) {
+        this.superBoostUntil = 0
+        this.playerBody.setGravityY(0)
+      } else {
+        const worldG = this.physics.world.gravity.y
+        this.playerBody.setGravityY(worldG * (SUPER_JUMP_BOOST_GRAVITY_FACTOR - 1))
+      }
+    } else if (this.playerBody.gravity.y !== 0) {
+      this.playerBody.setGravityY(0)
     }
 
     // (sem screen-wrap — o player colide nas paredes laterais via world bounds)
