@@ -63,6 +63,9 @@ const AIR_ACCEL_REVERSE = 2500 // px/s^2 — input opposes current motion
 const AIR_DRAG = 400 // px/s^2 — passive deceleration when no input in air
 const DEATH_ZONE_PADDING = 30
 
+/** Single source of truth for world gravity. Matches the Phaser config. */
+const BASE_GRAVITY_Y = 1200
+
 /**
  * Maximum horizontal gap, in pixels, between the right edge of the previous
  * step and the left edge of the next (or vice-versa). Keeps the procedural
@@ -188,8 +191,12 @@ export class GameScene extends Phaser.Scene {
     this.inputMgr = new InputManager(this)
     this.cameras.main.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 1000000)
     this.physics.world.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 2000000)
-    this.baseGravityY = this.physics.world.gravity.y
-    this.physics.world.gravity.y = this.baseGravityY // reset in case of scene restart
+    // Always force the world gravity to the known baseline on scene create.
+    // We do NOT read whatever happens to be on the world right now, because
+    // a previous run's leftover lunar/heavy effect (or any other future
+    // gravity-modifying state) could otherwise become the new "base".
+    this.baseGravityY = BASE_GRAVITY_Y
+    this.physics.world.gravity.y = BASE_GRAVITY_Y
 
     this.mapTheme.paintBackground({ scene: this, width: GAME_WIDTH, height: GAME_HEIGHT })
     this.mapTheme.paintStructure?.({ scene: this, width: GAME_WIDTH, height: GAME_HEIGHT })
