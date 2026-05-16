@@ -31,11 +31,29 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
+    this.applyNearestFilterToCharacterTextures()
     this.createCharacterAnimations()
     // Sanity log so we notice missing assets in dev. USED_PLAYER_STATES is
     // imported to keep the dependency live; useful as we extend later.
     void USED_PLAYER_STATES
     this.scene.start('MenuScene')
+  }
+
+  /**
+   * Pixel-art sprites look crisp when scaled with nearest-neighbor filtering
+   * and blurry with the default bilinear. Setting NEAREST per-texture lets us
+   * keep `pixelArt: false` at the game level (so vector shapes stay smooth)
+   * without losing chunky character art when the player visual is enlarged.
+   */
+  private applyNearestFilterToCharacterTextures() {
+    for (const basename of CRAFTPIX_BASENAMES) {
+      for (const anim of ANIMS_TO_LOAD) {
+        const key = animKey(basename, anim)
+        if (this.textures.exists(key)) {
+          this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST)
+        }
+      }
+    }
   }
 
   /**

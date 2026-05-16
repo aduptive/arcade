@@ -19,7 +19,19 @@ import {
 } from '../characters'
 
 const PLATFORM_HEIGHT = 16
-const PLAYER_SIZE = 28
+/**
+ * Visual size of the player on screen. Independent from the physics body so
+ * we can make the character chunky and visible without changing the
+ * difficulty of landing on small steps.
+ */
+const PLAYER_VISUAL_SIZE = 112
+/**
+ * Logical size of the player's physics body. Kept small so the player can
+ * still land precisely on the smallest level-10 steps (50 px wide).
+ */
+const PLAYER_BODY_SIZE = 28
+// Backward-compat alias for the few spots that still want a single size hint.
+const PLAYER_SIZE = PLAYER_BODY_SIZE
 const JUMP_VELOCITY = -780
 const GROUND_MAX_SPEED = 320 // max horizontal speed on the ground (responsive)
 const AIR_MAX_SPEED = 320 // max horizontal speed in the air (matches ground so launch velocity carries)
@@ -227,16 +239,17 @@ export class GameScene extends Phaser.Scene {
       scene: this,
       x: GAME_WIDTH / 2,
       y: this.startY,
-      size: PLAYER_SIZE,
+      size: PLAYER_VISUAL_SIZE,
     })
     this.physics.add.existing(this.player)
     this.playerBody = this.player.body as Phaser.Physics.Arcade.Body
-    // Force the body to PLAYER_SIZE regardless of the visual's intrinsic size,
-    // so collisions stay identical across sprites, rectangles and images.
-    this.playerBody.setSize(PLAYER_SIZE, PLAYER_SIZE)
+    // Body stays small for tight collisions on narrow steps; the visual is
+    // free to be chunky around it. Offset the body to center within the
+    // (possibly larger) visual.
+    this.playerBody.setSize(PLAYER_BODY_SIZE, PLAYER_BODY_SIZE)
     this.playerBody.setOffset(
-      ((this.player.width ?? PLAYER_SIZE) - PLAYER_SIZE) / 2,
-      ((this.player.height ?? PLAYER_SIZE) - PLAYER_SIZE) / 2
+      ((this.player.width ?? PLAYER_BODY_SIZE) - PLAYER_BODY_SIZE) / 2,
+      ((this.player.height ?? PLAYER_BODY_SIZE) - PLAYER_BODY_SIZE) / 2
     )
     this.playerBody.setCollideWorldBounds(true) // colide com paredes laterais
     this.highestPlayerY = this.player.y
