@@ -147,11 +147,16 @@ export class HallOfFameScene extends Phaser.Scene {
       })
       scoreTxt.setOrigin(1, 0.5)
 
-      const breakdown = this.add.text(GAME_WIDTH - 28, y + 12, `${entry.altura}m · x${entry.bestCombo}`, {
-        fontFamily: 'Courier New, monospace',
-        fontSize: '9px',
-        color: '#666666',
-      })
+      const breakdown = this.add.text(
+        GAME_WIDTH - 28,
+        y + 12,
+        `${entry.altura}m · lvl ${entry.level ?? 1} · x${entry.bestCombo}`,
+        {
+          fontFamily: 'Courier New, monospace',
+          fontSize: '9px',
+          color: '#666666',
+        }
+      )
       breakdown.setOrigin(1, 0.5)
     })
   }

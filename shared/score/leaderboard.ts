@@ -17,6 +17,8 @@ export interface LeaderboardEntry {
   pontos: number
   /** Best combo chain reached this run. */
   bestCombo: number
+  /** Difficulty level the player reached. */
+  level: number
   /** Run duration in milliseconds. */
   timeMs: number
   /** Map id played. */
@@ -122,12 +124,15 @@ function sanitizeName(raw: string): string {
 function isValidEntry(obj: unknown): obj is LeaderboardEntry {
   if (!obj || typeof obj !== 'object') return false
   const e = obj as Record<string, unknown>
+  // `level` was added later; accept legacy entries by defaulting it.
+  if (typeof e.level !== 'number') e.level = 1
   return (
     typeof e.name === 'string' &&
     typeof e.score === 'number' &&
     typeof e.altura === 'number' &&
     typeof e.pontos === 'number' &&
     typeof e.bestCombo === 'number' &&
+    typeof e.level === 'number' &&
     typeof e.timeMs === 'number' &&
     typeof e.mapId === 'string' &&
     typeof e.characterId === 'string' &&

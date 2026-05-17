@@ -1019,6 +1019,7 @@ export class GameScene extends Phaser.Scene {
         timeMs: this.elapsedMs,
         points: this.points,
         bestCombo: this.bestCombo,
+        level: this.currentLevel,
         mapId: this.mapTheme.id,
         characterId: this.characterSkin.id,
         startLevel: this.startLevel > 1 ? this.startLevel : undefined,
