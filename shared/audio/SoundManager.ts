@@ -19,6 +19,7 @@ export type AudioEvent =
   | 'jump'
   | 'super_jump'
   | 'land'
+  | 'wall_bounce'
   | 'pickup_coin'
   | 'pickup_super'
   | 'pickup_lunar'

@@ -21,6 +21,8 @@ export const nyMap: MapTheme = {
   backgroundColor: 0x0a0f24,
   hudAccent: '#fff7c4',
   flashAccent: '#ffd93d',
+  // Urban brick + glass: more energetic bounce off the building walls.
+  wallBounceFactor: 0.85,
   // NY pickups: bagel (coin) / coffee (super) / donut (lunar) / pretzel (?)
   pickupTheme: {
     coin: { fillColor: 0xd9a86b, strokeColor: 0x6b4a2a, label: 'B' }, // bagel

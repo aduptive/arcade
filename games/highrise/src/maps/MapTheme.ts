@@ -94,6 +94,15 @@ export interface MapTheme {
    * a flat color swatch using `backgroundColor`.
    */
   paintCardPreview?: (args: CardPreviewArgs) => void
+
+  /**
+   * Elastic bounce factor against the left/right world walls while the
+   * player is in the air. 0 = no bounce (player stops at the wall),
+   * 1 = perfect elastic. Defaults to ~0.7 if undefined. Bounce never
+   * applies on the ground — there it would feel like the player getting
+   * shoved back when they just want to stand still.
+   */
+  wallBounceFactor?: number
 }
 
 export interface CardPreviewArgs {

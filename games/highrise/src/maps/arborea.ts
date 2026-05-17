@@ -21,6 +21,8 @@ export const arboreaMap: MapTheme = {
   backgroundColor: 0x1a2e1a,
   hudAccent: '#e8f5d8',
   flashAccent: '#a3d76b',
+  // Trees flex and absorb impact: dampened wall bounce.
+  wallBounceFactor: 0.5,
   // Forest-themed pickups: jabuticaba (coin) / mel (super) / folha (lunar) / pinha (?)
   pickupTheme: {
     coin: { fillColor: 0x3a1a2e, strokeColor: 0x1a0a18, label: 'J', labelColor: '#e8a5c4' }, // jabuticaba

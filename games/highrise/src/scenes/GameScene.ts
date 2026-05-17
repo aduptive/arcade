@@ -67,6 +67,9 @@ const DEATH_ZONE_PADDING = 30
 /** Single source of truth for world gravity. Matches the Phaser config. */
 const BASE_GRAVITY_Y = 1200
 
+/** Default elastic factor for in-air wall bounces. Maps can override. */
+const DEFAULT_WALL_BOUNCE_FACTOR = 0.7
+
 // Combo system (Phase 4): consecutive new-step-up landings without standing
 // still too long on any step or landing on the same step twice.
 const COMBO_STAND_BREAK_MS = 1500
@@ -135,6 +138,9 @@ export class GameScene extends Phaser.Scene {
   private hasShownSuperHint = false
   private wasSuperReady = false
   private superPulseTween: Phaser.Tweens.Tween | null = null
+  /** Previous frame's blocked-left/right state — used to detect new wall hits. */
+  private wasBlockedLeft = false
+  private wasBlockedRight = false
   private superBoostUntil = 0 // absolute time when the sustained super-jump boost ends
   private dropThroughUntil = 0 // absolute time when the platform drop-through window ends
   /** Time (`this.time.now`) when 'left' began being pressed, or 0 if not held. */
@@ -213,6 +219,8 @@ export class GameScene extends Phaser.Scene {
     this.wasSuperReady = false
     this.superPulseTween?.stop()
     this.superPulseTween = null
+    this.wasBlockedLeft = false
+    this.wasBlockedRight = false
     this.inputMgr = new InputManager(this)
     this.audio = new SoundManager(this)
     this.cameras.main.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 1000000)
@@ -1081,6 +1089,21 @@ export class GameScene extends Phaser.Scene {
         this.breakCombo()
       }
     }
+
+    // Wall bounce: enabled in the air, disabled on ground (otherwise the
+    // player gets shoved back while standing next to a wall). When a new
+    // wall hit is detected mid-air, fire a sound for feel.
+    const wallBounceFactor = this.mapTheme.wallBounceFactor ?? DEFAULT_WALL_BOUNCE_FACTOR
+    this.playerBody.setBounceX(onGround ? 0 : wallBounceFactor)
+    const blockedLeft = this.playerBody.blocked.left
+    const blockedRight = this.playerBody.blocked.right
+    if (!onGround && wallBounceFactor > 0) {
+      if ((blockedLeft && !this.wasBlockedLeft) || (blockedRight && !this.wasBlockedRight)) {
+        this.audio.play('wall_bounce')
+      }
+    }
+    this.wasBlockedLeft = blockedLeft
+    this.wasBlockedRight = blockedRight
 
     // Drive the character's animation based on the current player state.
     this.updatePlayerAnimation()
