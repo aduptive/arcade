@@ -132,6 +132,9 @@ export class GameScene extends Phaser.Scene {
   private superText!: Phaser.GameObjects.Text
   private superJumpCharges = 0
   private chargeTimerMs = 0 // ms acumulados desde a última carga ganha (zera ao ganhar; congela em max)
+  private hasShownSuperHint = false
+  private wasSuperReady = false
+  private superPulseTween: Phaser.Tweens.Tween | null = null
   private superBoostUntil = 0 // absolute time when the sustained super-jump boost ends
   private dropThroughUntil = 0 // absolute time when the platform drop-through window ends
   /** Time (`this.time.now`) when 'left' began being pressed, or 0 if not held. */
@@ -206,6 +209,10 @@ export class GameScene extends Phaser.Scene {
     this.bestCombo = 0
     this.lastLandedPlatform = null
     this.comboStandStartMs = 0
+    this.hasShownSuperHint = false
+    this.wasSuperReady = false
+    this.superPulseTween?.stop()
+    this.superPulseTween = null
     this.inputMgr = new InputManager(this)
     this.audio = new SoundManager(this)
     this.cameras.main.setBounds(0, -1000000, GAME_WIDTH, GAME_HEIGHT + 1000000)
@@ -629,16 +636,88 @@ export class GameScene extends Phaser.Scene {
       const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000))
       this.superText.setText(`SUPER: x${this.superJumpCharges} (${remainingSec}s)`)
     }
+
+    // Gentle scale pulse on the HUD while at least one charge is available,
+    // so the eye notices it. Start/stop on transitions, not every frame.
+    const isReady = this.superJumpCharges > 0
+    if (isReady && !this.wasSuperReady) {
+      this.superText.setScale(1)
+      this.superPulseTween?.stop()
+      this.superPulseTween = this.tweens.add({
+        targets: this.superText,
+        scale: { from: 1, to: 1.12 },
+        duration: 600,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      })
+    } else if (!isReady && this.wasSuperReady) {
+      this.superPulseTween?.stop()
+      this.superPulseTween = null
+      this.superText.setScale(1)
+    }
+    this.wasSuperReady = isReady
   }
 
   private flashSuperGain() {
-    // Flash sutil no texto do HUD
+    // Short scale pop on the HUD itself…
     this.tweens.add({
       targets: this.superText,
       scale: { from: 1.6, to: 1 },
-      alpha: { from: 1, to: 1 },
       duration: 350,
       ease: 'Back.easeOut',
+    })
+
+    // …and on the FIRST charge of this run, a much bigger center-screen
+    // notification + control hint so the player can't miss that they have
+    // a new ability available.
+    if (!this.hasShownSuperHint && this.superJumpCharges === 1) {
+      this.hasShownSuperHint = true
+      this.showSuperReadyHint()
+    } else {
+      this.flashNotification('+1 SUPER', '#7ad4ff')
+    }
+  }
+
+  private showSuperReadyHint() {
+    const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50, 'SUPER JUMP READY!', {
+      fontFamily: 'Courier New, monospace',
+      fontSize: '34px',
+      color: '#7ad4ff',
+      fontStyle: 'bold',
+    })
+    title.setOrigin(0.5)
+    title.setScrollFactor(0)
+    title.setShadow(2, 2, '#000', 4, true, true)
+    title.setLetterSpacing(3)
+    title.setDepth(10_000)
+
+    const subtitle = this.add.text(
+      GAME_WIDTH / 2,
+      GAME_HEIGHT / 2 - 8,
+      'press SPACE   /   gamepad B   /   tap SUP',
+      {
+        fontFamily: 'Courier New, monospace',
+        fontSize: '13px',
+        color: '#dddddd',
+      }
+    )
+    subtitle.setOrigin(0.5)
+    subtitle.setScrollFactor(0)
+    subtitle.setDepth(10_000)
+    subtitle.setLetterSpacing(2)
+
+    this.tweens.add({
+      targets: [title, subtitle],
+      alpha: { from: 1, to: 0 },
+      y: '-=20',
+      duration: 800,
+      delay: 1900,
+      ease: 'Cubic.easeOut',
+      onComplete: () => {
+        title.destroy()
+        subtitle.destroy()
+      },
     })
   }
 
