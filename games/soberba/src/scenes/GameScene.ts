@@ -110,7 +110,7 @@ export class GameScene extends Phaser.Scene {
     title.setOrigin(0.5, 0)
     title.setShadow(2, 2, '#000', 2, true, true)
 
-    const tagline = this.add.text(GAME_WIDTH / 2, 64, 'O CÉU É PROIBIDO', {
+    const tagline = this.add.text(GAME_WIDTH / 2, 64, 'THE SKY IS FORBIDDEN', {
       fontFamily: 'Georgia, "Times New Roman", serif',
       fontSize: '12px',
       color: COLOR_FADED_GOLD,

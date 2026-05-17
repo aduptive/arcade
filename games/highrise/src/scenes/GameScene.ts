@@ -362,7 +362,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawHUD() {
-    this.scoreText = this.add.text(20, 20, 'ALTURA: 0m', {
+    this.scoreText = this.add.text(20, 20, 'HEIGHT: 0m', {
       fontFamily: 'Courier New, monospace',
       fontSize: '22px',
       color: '#f5f5f5',
@@ -371,7 +371,7 @@ export class GameScene extends Phaser.Scene {
     this.scoreText.setScrollFactor(0)
     this.scoreText.setShadow(2, 2, '#000', 0, true, true)
 
-    this.pointsText = this.add.text(20, 48, 'PONTOS: 0', {
+    this.pointsText = this.add.text(20, 48, 'POINTS: 0', {
       fontFamily: 'Courier New, monospace',
       fontSize: '16px',
       color: '#ffd700',
@@ -379,7 +379,7 @@ export class GameScene extends Phaser.Scene {
     this.pointsText.setScrollFactor(0)
     this.pointsText.setShadow(1, 1, '#000', 0, true, true)
 
-    this.levelText = this.add.text(20, 70, 'NÍVEL 1', {
+    this.levelText = this.add.text(20, 70, 'LEVEL 1', {
       fontFamily: 'Courier New, monospace',
       fontSize: '14px',
       color: '#c9a96b',
@@ -404,7 +404,7 @@ export class GameScene extends Phaser.Scene {
     this.effectText.setScrollFactor(0)
     this.effectText.setShadow(1, 1, '#000', 0, true, true)
 
-    this.timeText = this.add.text(GAME_WIDTH - 20, 20, 'TEMPO: 0:00', {
+    this.timeText = this.add.text(GAME_WIDTH - 20, 20, 'TIME: 0:00', {
       fontFamily: 'Courier New, monospace',
       fontSize: '22px',
       color: '#f5f5f5',
@@ -493,7 +493,7 @@ export class GameScene extends Phaser.Scene {
         if (this.gainSuperCharge()) {
           this.flashNotification('+1 SUPER', '#7ad4ff')
         } else {
-          this.flashNotification('SUPER CHEIO', '#7ad4ff')
+          this.flashNotification('SUPER FULL', '#7ad4ff')
         }
         this.audio.play('pickup_super')
         break
@@ -540,7 +540,7 @@ export class GameScene extends Phaser.Scene {
         this.flashNotification('? +50 PTS', '#ffd700')
         break
       case 'nothing':
-        this.flashNotification('? NADA', '#aaaaaa')
+        this.flashNotification('? NOTHING', '#aaaaaa')
         break
       case 'heavy':
         this.setGravityEffect('heavy', 1.7, 5000)
@@ -551,7 +551,7 @@ export class GameScene extends Phaser.Scene {
           this.superJumpCharges--
           this.flashNotification('? -1 SUPER', '#c4503a')
         } else {
-          this.flashNotification('? ESCAPOU', '#aaaaaa')
+          this.flashNotification('? ESCAPED', '#aaaaaa')
         }
         break
     }
@@ -559,7 +559,7 @@ export class GameScene extends Phaser.Scene {
 
   private addPoints(n: number) {
     this.points += n
-    this.pointsText.setText(`PONTOS: ${this.points}`)
+    this.pointsText.setText(`POINTS: ${this.points}`)
   }
 
   private gainSuperCharge(): boolean {
@@ -695,7 +695,7 @@ export class GameScene extends Phaser.Scene {
 
   private flashComboGain() {
     const color = this.combo >= 10 ? '#ff3030' : this.combo >= 5 ? '#ff9a3c' : '#ffd93d'
-    const label = this.combo >= 10 ? `x${this.combo} INSANO!` : `x${this.combo}!`
+    const label = this.combo >= 10 ? `x${this.combo} INSANE!` : `x${this.combo}!`
     const t = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 10, label, {
       fontFamily: 'Courier New, monospace',
       fontSize: this.combo >= 10 ? '40px' : '30px',
@@ -785,7 +785,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private flashLevelUp(level: number) {
-    const flash = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, `NÍVEL ${level}`, {
+    const flash = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, `LEVEL ${level}`, {
       fontFamily: 'Courier New, monospace',
       fontSize: '64px',
       color: '#ff6b35',
@@ -935,7 +935,7 @@ export class GameScene extends Phaser.Scene {
     // Trigger do auto-scroll vem do collider (primeiro pouso em step não-floor).
     if (this.runStartTime > 0) {
       this.elapsedMs = this.time.now - this.runStartTime
-      this.timeText.setText(`TEMPO: ${this.formatTime(this.elapsedMs)}`)
+      this.timeText.setText(`TIME: ${this.formatTime(this.elapsedMs)}`)
     }
 
     // Cargas de super pulo: ticka só quando a corrida começou.
@@ -959,7 +959,7 @@ export class GameScene extends Phaser.Scene {
     // Detecta troca de nível (display) → flash
     if (cfg.level !== this.currentLevel) {
       this.currentLevel = cfg.level
-      this.levelText.setText(`NÍVEL ${this.currentLevel}`)
+      this.levelText.setText(`LEVEL ${this.currentLevel}`)
       this.flashLevelUp(this.currentLevel)
       this.audio.play('level_up')
     }
@@ -981,7 +981,7 @@ export class GameScene extends Phaser.Scene {
     if (this.player.y < this.highestPlayerY) {
       this.highestPlayerY = this.player.y
       this.score = Math.floor((this.startY - this.highestPlayerY) / 32) + this.scoreOffset
-      this.scoreText.setText(`ALTURA: ${Math.max(0, this.score)}m`)
+      this.scoreText.setText(`HEIGHT: ${Math.max(0, this.score)}m`)
     }
 
     // spawnar mais steps acima conforme sobe — usa config corrente

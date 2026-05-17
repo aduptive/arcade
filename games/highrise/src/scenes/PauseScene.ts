@@ -66,12 +66,12 @@ export class PauseScene extends Phaser.Scene {
     const colValueX = cx + 80
 
     const rows: Array<[string, string]> = [
-      ['ALTURA', `${data?.score ?? 0} m`],
-      ['PONTOS', `${data?.points ?? 0}`],
-      ['TEMPO', formatTime(data?.timeMs ?? 0)],
-      ['NÍVEL', `${data?.level ?? 1}`],
+      ['HEIGHT', `${data?.score ?? 0} m`],
+      ['LEVEL', `${data?.level ?? 1}`],
+      ['POINTS', `${data?.points ?? 0}`],
+      ['TIME', formatTime(data?.timeMs ?? 0)],
       ['SUPER', `x${data?.superCharges ?? 0}`],
-      ['MELHOR COMBO', `x${data?.bestCombo ?? 0}`],
+      ['BEST COMBO', `x${data?.bestCombo ?? 0}`],
     ]
     rows.forEach(([label, value], idx) => {
       const y = statsTop + idx * lineHeight
