@@ -4,15 +4,21 @@ import type { InputManager } from './InputManager'
 /**
  * Touch-only on-screen controls for vertical platformers.
  *
- * Bottom strip is divided into three columns:
- *   - Left zone (hold to move left)
- *   - Center column with visible JUMP and SUPER buttons (tap)
- *   - Right zone (hold to move right)
+ * Layout: four compact corner buttons.
  *
- * All actions are driven through `InputManager.setVirtualPressed`, so
- * pressing a button is equivalent to holding the corresponding key. The
- * scene's swipe/tap detector is told to ignore the bottom strip, so
- * hold-then-release on a movement zone never also fires a global jump.
+ *   bottom-left corner:        LEFT  <  >  RIGHT
+ *   bottom-right corner:                  [ SUP ]
+ *                                         [ JUMP ]
+ *
+ * Each button is a held-press: pointerdown asserts the virtual action,
+ * pointerup / pointerout / pointerupoutside releases it. The visible
+ * circle is small so it doesn't cover the play area, but the interactive
+ * hit area is padded out so a thumb that lands "near" the button still
+ * counts.
+ *
+ * Swipe and tap gestures from `InputManager` keep working anywhere on
+ * screen — these buttons are added on top, not in place of, the gesture
+ * detector. Useful as a fallback if a finger drifts.
  *
  * Auto-hides on non-touch devices.
  */
@@ -22,14 +28,8 @@ const IS_TOUCH_DEVICE =
   ('ontouchstart' in window || navigator.maxTouchPoints > 0)
 
 export interface MobileControlsOptions {
-  /** Fraction of the scene height occupied by the bottom control strip. */
-  bottomFraction?: number
-  /** Fraction of the screen width given to each side movement zone (0-0.5). */
-  sideWidthFraction?: number
   /** Force-enable even on desktop (useful for debugging). */
   forceEnable?: boolean
-  /** Render the visible arrow hints and button labels. */
-  showHints?: boolean
 }
 
 export class MobileControls {
@@ -43,116 +43,77 @@ export class MobileControls {
     this.enabled = options.forceEnable === true || IS_TOUCH_DEVICE
     if (!this.enabled) return
 
-    const bottomFraction = options.bottomFraction ?? 0.32
-    const sideWidthFraction = options.sideWidthFraction ?? 0.32
-    const showHints = options.showHints ?? true
-
     const w = scene.scale.width
     const h = scene.scale.height
-    const zoneTop = h * (1 - bottomFraction)
-    const zoneHeight = h * bottomFraction
-    const sideW = w * sideWidthFraction
-    const centerW = w - sideW * 2
 
-    inputMgr.setTouchIgnoreBelowY(zoneTop)
+    const margin = 18
+    const arrowR = 32
+    const arrowGap = 12
+    const jumpR = 48
+    const supR = 30
+    const verticalGapSupToJump = 14
 
-    // ---- LEFT hold zone ----
-    const leftZone = scene.add.zone(0, zoneTop, sideW, zoneHeight).setOrigin(0, 0)
-    leftZone.setScrollFactor(0).setDepth(10_000).setInteractive()
-    leftZone.on('pointerdown', () => inputMgr.setVirtualPressed('left', true))
-    leftZone.on('pointerup', () => inputMgr.setVirtualPressed('left', false))
-    leftZone.on('pointerout', () => inputMgr.setVirtualPressed('left', false))
-    leftZone.on('pointerupoutside', () => inputMgr.setVirtualPressed('left', false))
+    // ---- Left cluster: < and > arrows ----
+    const leftCx = margin + arrowR
+    const arrowCy = h - margin - arrowR
+    this.makeHoldButton(leftCx, arrowCy, arrowR, '<', 0x222230, 0x666677, 'left')
 
-    // ---- RIGHT hold zone ----
-    const rightZone = scene.add.zone(w - sideW, zoneTop, sideW, zoneHeight).setOrigin(0, 0)
-    rightZone.setScrollFactor(0).setDepth(10_000).setInteractive()
-    rightZone.on('pointerdown', () => inputMgr.setVirtualPressed('right', true))
-    rightZone.on('pointerup', () => inputMgr.setVirtualPressed('right', false))
-    rightZone.on('pointerout', () => inputMgr.setVirtualPressed('right', false))
-    rightZone.on('pointerupoutside', () => inputMgr.setVirtualPressed('right', false))
+    const rightCx = leftCx + arrowR * 2 + arrowGap
+    this.makeHoldButton(rightCx, arrowCy, arrowR, '>', 0x222230, 0x666677, 'right')
 
-    // ---- CENTER column: JUMP (big) and SUPER (smaller, above) ----
-    const centerCx = sideW + centerW / 2
-    const jumpCy = h - zoneHeight * 0.32
-    const jumpRadius = Math.min(zoneHeight * 0.28, centerW * 0.42, 48)
-    const superRadius = jumpRadius * 0.62
-    const superCy = jumpCy - jumpRadius - superRadius - 4
+    // ---- Right cluster: JUMP (big) + SUP (smaller, above) ----
+    const jumpCx = w - margin - jumpR
+    const jumpCy = h - margin - jumpR
+    this.makeHoldButton(jumpCx, jumpCy, jumpR, 'JMP', 0xff6b35, 0xa6391c, 'up')
 
-    this.makeButton(centerCx, jumpCy, jumpRadius, 0xff6b35, 0xa6391c, () => {
-      inputMgr.setVirtualPressed('up', true)
-    }, () => {
-      inputMgr.setVirtualPressed('up', false)
-    })
-    this.makeButton(centerCx, superCy, superRadius, 0x7ad4ff, 0x3a7c9b, () => {
-      inputMgr.setVirtualPressed('action', true)
-    }, () => {
-      inputMgr.setVirtualPressed('action', false)
-    })
-
-    if (showHints) {
-      // Arrow labels for the hold zones
-      const arrowY = zoneTop + zoneHeight / 2
-      const leftArrow = scene.add.text(sideW / 2, arrowY, '<', {
-        fontFamily: 'Courier New, monospace',
-        fontSize: '40px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-      })
-      leftArrow.setOrigin(0.5).setAlpha(0.28).setScrollFactor(0).setDepth(10_001)
-      const rightArrow = scene.add.text(w - sideW / 2, arrowY, '>', {
-        fontFamily: 'Courier New, monospace',
-        fontSize: '40px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-      })
-      rightArrow.setOrigin(0.5).setAlpha(0.28).setScrollFactor(0).setDepth(10_001)
-
-      // Labels on the buttons
-      const jumpLabel = scene.add.text(centerCx, jumpCy, 'JUMP', {
-        fontFamily: 'Courier New, monospace',
-        fontSize: `${Math.max(11, Math.floor(jumpRadius * 0.42))}px`,
-        color: '#ffffff',
-        fontStyle: 'bold',
-      })
-      jumpLabel.setOrigin(0.5).setScrollFactor(0).setDepth(10_003)
-      const superLabel = scene.add.text(centerCx, superCy, 'SUP', {
-        fontFamily: 'Courier New, monospace',
-        fontSize: `${Math.max(9, Math.floor(superRadius * 0.5))}px`,
-        color: '#ffffff',
-        fontStyle: 'bold',
-      })
-      superLabel.setOrigin(0.5).setScrollFactor(0).setDepth(10_003)
-    }
+    const supCx = jumpCx
+    const supCy = jumpCy - jumpR - verticalGapSupToJump - supR
+    this.makeHoldButton(supCx, supCy, supR, 'SUP', 0x7ad4ff, 0x3a7c9b, 'action')
   }
 
-  private makeButton(
+  private makeHoldButton(
     cx: number,
     cy: number,
     radius: number,
-    fillColor: number,
-    strokeColor: number,
-    onDown: () => void,
-    onUp: () => void
+    label: string,
+    fill: number,
+    stroke: number,
+    action: 'left' | 'right' | 'up' | 'down' | 'action'
   ) {
-    const bg = this.scene.add.circle(cx, cy, radius, fillColor, 0.78)
-    bg.setStrokeStyle(3, strokeColor, 0.95)
-    bg.setScrollFactor(0).setDepth(10_002).setInteractive()
-    bg.on('pointerdown', () => {
-      bg.setFillStyle(fillColor, 1)
-      onDown()
+    const circle = this.scene.add.circle(cx, cy, radius, fill, 0.72)
+    circle.setStrokeStyle(3, stroke, 0.92)
+    circle.setScrollFactor(0)
+    circle.setDepth(10_002)
+    // Hit area pads beyond the visible circle so a thumb that lands "near"
+    // still registers — usability tradeoff for the smaller visual.
+    circle.setInteractive(
+      new Phaser.Geom.Circle(radius, radius, radius + 18),
+      Phaser.Geom.Circle.Contains
+    )
+
+    const press = () => {
+      circle.setFillStyle(fill, 0.95)
+      this.inputMgr.setVirtualPressed(action, true)
+    }
+    const release = () => {
+      circle.setFillStyle(fill, 0.72)
+      this.inputMgr.setVirtualPressed(action, false)
+    }
+
+    circle.on('pointerdown', press)
+    circle.on('pointerup', release)
+    circle.on('pointerout', release)
+    circle.on('pointerupoutside', release)
+
+    const txt = this.scene.add.text(cx, cy, label, {
+      fontFamily: 'Courier New, monospace',
+      fontSize: radius > 40 ? '18px' : '13px',
+      color: '#ffffff',
+      fontStyle: 'bold',
     })
-    bg.on('pointerup', () => {
-      bg.setFillStyle(fillColor, 0.78)
-      onUp()
-    })
-    bg.on('pointerout', () => {
-      bg.setFillStyle(fillColor, 0.78)
-      onUp()
-    })
-    bg.on('pointerupoutside', () => {
-      bg.setFillStyle(fillColor, 0.78)
-      onUp()
-    })
+    txt.setOrigin(0.5)
+    txt.setScrollFactor(0)
+    txt.setDepth(10_003)
+    txt.setLetterSpacing(1)
   }
 }
