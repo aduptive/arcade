@@ -80,26 +80,6 @@ export function createSpriteCharacter(cfg: SpriteCharacterConfig): CharacterSkin
       sprite.play(idleKey)
       container.add(sprite)
 
-      // ---- DEBUG OUTLINES ----
-      // White rectangle = container area (where the logical body lives).
-      // Red rectangle = sprite frame.
-      // Cyan crosshair = container's exact center.
-      // Strip this whole block before shipping.
-      const containerOutline = scene.add.rectangle(0, 0, size, size)
-      containerOutline.setStrokeStyle(2, 0xffffff, 0.85)
-      container.add(containerOutline)
-
-      const spriteOutline = scene.add.rectangle(0, 0, size, size)
-      spriteOutline.setStrokeStyle(2, 0xff3030, 0.95)
-      container.add(spriteOutline)
-
-      const crosshair = scene.add.graphics()
-      crosshair.lineStyle(1, 0x00ffff, 1)
-      crosshair.lineBetween(-10, 0, 10, 0)
-      crosshair.lineBetween(0, -10, 0, 10)
-      container.add(crosshair)
-      // ---- /DEBUG ----
-
       container.setData('basename', cfg.basename)
       container.setData('innerSprite', sprite)
       container.setData('currentState', 'idle')

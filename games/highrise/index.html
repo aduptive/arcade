@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -11,7 +11,7 @@
       html, body {
         margin: 0;
         padding: 0;
-        background: #1a1a2e;
+        background: #0a0a14;
         overflow: hidden;
         height: 100%;
         width: 100%;
@@ -22,6 +22,8 @@
         -webkit-user-select: none;
         -webkit-tap-highlight-color: transparent;
       }
+      /* Center the Phaser canvas in the viewport. Flexbox handles both axes
+         even when the window is wider than the (capped) game canvas. */
       #game {
         width: 100vw;
         height: 100vh;
@@ -29,8 +31,93 @@
         align-items: center;
         justify-content: center;
       }
-      canvas {
+      #game canvas {
         display: block;
+        margin: 0 auto;
+      }
+
+      /* High-score name entry dialog. Uses the native <dialog> element so it
+         can be styled but keeps focus management, ESC-to-close, etc. */
+      dialog.hs-dialog {
+        background: #14141e;
+        color: #f5f5f5;
+        border: 2px solid #ffd93d;
+        border-radius: 8px;
+        padding: 24px 28px;
+        font-family: 'Courier New', monospace;
+        max-width: 360px;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+      }
+      dialog.hs-dialog::backdrop {
+        background: rgba(0, 0, 0, 0.7);
+      }
+      dialog.hs-dialog h2 {
+        margin: 0 0 6px;
+        color: #ffd93d;
+        font-size: 22px;
+        letter-spacing: 3px;
+        text-align: center;
+      }
+      dialog.hs-dialog .hs-score {
+        margin: 0 0 18px;
+        color: #c9a96b;
+        text-align: center;
+        font-size: 14px;
+      }
+      dialog.hs-dialog label {
+        display: block;
+        font-size: 12px;
+        color: #999;
+        margin: 0 0 6px;
+        letter-spacing: 2px;
+      }
+      dialog.hs-dialog input {
+        width: 100%;
+        padding: 10px 12px;
+        font-family: inherit;
+        font-size: 18px;
+        background: #0a0a14;
+        color: #f5f5f5;
+        border: 2px solid #444;
+        border-radius: 4px;
+        box-sizing: border-box;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+      dialog.hs-dialog input:focus {
+        outline: none;
+        border-color: #ffd93d;
+      }
+      dialog.hs-dialog .hs-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 18px;
+      }
+      dialog.hs-dialog button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      dialog.hs-dialog button.primary {
+        background: #ff6b35;
+        color: #fff;
+      }
+      dialog.hs-dialog button.primary:hover {
+        background: #ff8552;
+      }
+      dialog.hs-dialog button.secondary {
+        background: #4a4a4a;
+        color: #fff;
+      }
+      dialog.hs-dialog button.secondary:hover {
+        background: #666;
       }
     </style>
   </head>
