@@ -44,6 +44,8 @@ export class InputManager {
    * by the swipe/tap detector, so dedicated virtual buttons in that area don't
    * also fire a global jump on release. 0 disables the cutoff. */
   private touchIgnoreBelowY = 0
+  /** Master switch for the swipe/tap detector. False = no gesture ever fires. */
+  private touchGesturesEnabled = true
 
   private touchStartX = 0
   private touchStartY = 0
@@ -88,6 +90,7 @@ export class InputManager {
 
   private setupTouch() {
     this.scene.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      if (!this.touchGesturesEnabled) return
       this.touchStartedInDeadZone =
         this.touchIgnoreBelowY > 0 && p.y >= this.touchIgnoreBelowY
       this.touchStartX = p.x
@@ -95,6 +98,7 @@ export class InputManager {
       this.touchStartTime = this.scene.time.now
     })
     this.scene.input.on('pointerup', (p: Phaser.Input.Pointer) => {
+      if (!this.touchGesturesEnabled) return
       if (this.touchStartedInDeadZone) {
         this.touchStartedInDeadZone = false
         return
@@ -133,6 +137,16 @@ export class InputManager {
    */
   setTouchIgnoreBelowY(y: number) {
     this.touchIgnoreBelowY = y
+  }
+
+  /**
+   * Master switch for the built-in swipe/tap gesture detector. Disable when
+   * a game ships its own custom touch model (e.g. drag = direction, release
+   * = jump) to prevent the gesture detector from double-firing on the same
+   * pointer events.
+   */
+  setTouchGesturesEnabled(enabled: boolean) {
+    this.touchGesturesEnabled = enabled
   }
 
   update() {

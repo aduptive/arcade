@@ -1,24 +1,23 @@
 import Phaser from 'phaser'
-import type { InputManager } from './InputManager'
+import type { InputManager, GameAction } from './InputManager'
 
 /**
- * Touch-only on-screen controls for vertical platformers.
+ * Touch-only on-screen controls — Flappy Bird inspired.
  *
- * Layout: four compact corner buttons.
+ * Model:
+ *   - Touch and drag anywhere = direction. Left half of screen = move left,
+ *     right half = move right. The direction tracks the finger live, so a
+ *     swipe across the midpoint flips it.
+ *   - Release the finger = jump (one-shot pulse on `up`).
+ *   - A small SUP button in the bottom-right corner triggers the super jump
+ *     on tap. Touches that start inside the SUP hit area do NOT count as a
+ *     direction touch and do NOT fire a jump on release.
  *
- *   bottom-left corner:        LEFT  <  >  RIGHT
- *   bottom-right corner:                  [ SUP ]
- *                                         [ JUMP ]
+ * Multi-touch: only the first non-SUP pointer drives direction. Extra fingers
+ * are ignored to avoid the SUP tap also flipping direction.
  *
- * Each button is a held-press: pointerdown asserts the virtual action,
- * pointerup / pointerout / pointerupoutside releases it. The visible
- * circle is small so it doesn't cover the play area, but the interactive
- * hit area is padded out so a thumb that lands "near" the button still
- * counts.
- *
- * Swipe and tap gestures from `InputManager` keep working anywhere on
- * screen — these buttons are added on top, not in place of, the gesture
- * detector. Useful as a fallback if a finger drifts.
+ * Disables `InputManager`'s built-in swipe/tap detector to prevent double
+ * fire on the same pointer events.
  *
  * Auto-hides on non-touch devices.
  */
@@ -35,69 +34,66 @@ export interface MobileControlsOptions {
 export class MobileControls {
   readonly enabled: boolean
 
+  private scene: Phaser.Scene
+  private inputMgr: InputManager
+  private directionPointerId: number | null = null
+  private currentDirection: 'left' | 'right' | null = null
+  private supPointerId: number | null = null
+  private supCx = 0
+  private supCy = 0
+  private supHitRadius = 0
+
   constructor(
-    private scene: Phaser.Scene,
-    private inputMgr: InputManager,
+    scene: Phaser.Scene,
+    inputMgr: InputManager,
     options: MobileControlsOptions = {}
   ) {
+    this.scene = scene
+    this.inputMgr = inputMgr
     this.enabled = options.forceEnable === true || IS_TOUCH_DEVICE
     if (!this.enabled) return
 
+    // Take over touch entirely — the built-in gesture detector would
+    // double-fire on the same pointer events.
+    inputMgr.setTouchGesturesEnabled(false)
+
     const w = scene.scale.width
     const h = scene.scale.height
-
     const margin = 18
-    const arrowR = 32
-    const arrowGap = 12
-    const jumpR = 48
-    const supR = 30
-    const verticalGapSupToJump = 14
+    const supR = 36
 
-    // ---- Left cluster: < and > arrows ----
-    const leftCx = margin + arrowR
-    const arrowCy = h - margin - arrowR
-    this.makeHoldButton(leftCx, arrowCy, arrowR, '<', 0x222230, 0x666677, 'left')
+    this.supCx = w - margin - supR
+    this.supCy = h - margin - supR
+    // Pad the hit radius so a thumb landing "near" the SUP still counts —
+    // and so direction-touch detection knows what area to exclude.
+    this.supHitRadius = supR + 18
 
-    const rightCx = leftCx + arrowR * 2 + arrowGap
-    this.makeHoldButton(rightCx, arrowCy, arrowR, '>', 0x222230, 0x666677, 'right')
-
-    // ---- Right cluster: JUMP (big) + SUP (smaller, above) ----
-    const jumpCx = w - margin - jumpR
-    const jumpCy = h - margin - jumpR
-    this.makeHoldButton(jumpCx, jumpCy, jumpR, 'JMP', 0xff6b35, 0xa6391c, 'up')
-
-    const supCx = jumpCx
-    const supCy = jumpCy - jumpR - verticalGapSupToJump - supR
-    this.makeHoldButton(supCx, supCy, supR, 'SUP', 0x7ad4ff, 0x3a7c9b, 'action')
+    this.makeSupButton(this.supCx, this.supCy, supR)
+    this.installTouchHandlers()
   }
 
-  private makeHoldButton(
-    cx: number,
-    cy: number,
-    radius: number,
-    label: string,
-    fill: number,
-    stroke: number,
-    action: 'left' | 'right' | 'up' | 'down' | 'action'
-  ) {
+  private makeSupButton(cx: number, cy: number, radius: number) {
+    const fill = 0x7ad4ff
+    const stroke = 0x3a7c9b
     const circle = this.scene.add.circle(cx, cy, radius, fill, 0.72)
     circle.setStrokeStyle(3, stroke, 0.92)
     circle.setScrollFactor(0)
     circle.setDepth(10_002)
-    // Hit area pads beyond the visible circle so a thumb that lands "near"
-    // still registers — usability tradeoff for the smaller visual.
     circle.setInteractive(
-      new Phaser.Geom.Circle(radius, radius, radius + 18),
+      new Phaser.Geom.Circle(radius, radius, this.supHitRadius),
       Phaser.Geom.Circle.Contains
     )
 
-    const press = () => {
+    const press = (p: Phaser.Input.Pointer) => {
+      this.supPointerId = p.id
       circle.setFillStyle(fill, 0.95)
-      this.inputMgr.setVirtualPressed(action, true)
+      this.inputMgr.setVirtualPressed('action', true)
     }
-    const release = () => {
+    const release = (p: Phaser.Input.Pointer) => {
+      if (this.supPointerId !== p.id) return
+      this.supPointerId = null
       circle.setFillStyle(fill, 0.72)
-      this.inputMgr.setVirtualPressed(action, false)
+      this.inputMgr.setVirtualPressed('action', false)
     }
 
     circle.on('pointerdown', press)
@@ -105,9 +101,9 @@ export class MobileControls {
     circle.on('pointerout', release)
     circle.on('pointerupoutside', release)
 
-    const txt = this.scene.add.text(cx, cy, label, {
+    const txt = this.scene.add.text(cx, cy, 'SUP', {
       fontFamily: 'Courier New, monospace',
-      fontSize: radius > 40 ? '18px' : '13px',
+      fontSize: '14px',
       color: '#ffffff',
       fontStyle: 'bold',
     })
@@ -115,5 +111,59 @@ export class MobileControls {
     txt.setScrollFactor(0)
     txt.setDepth(10_003)
     txt.setLetterSpacing(1)
+  }
+
+  private isInSupArea(p: Phaser.Input.Pointer): boolean {
+    const dx = p.x - this.supCx
+    const dy = p.y - this.supCy
+    return dx * dx + dy * dy <= this.supHitRadius * this.supHitRadius
+  }
+
+  private setDirection(next: 'left' | 'right' | null) {
+    if (this.currentDirection === next) return
+    if (this.currentDirection) {
+      this.inputMgr.setVirtualPressed(this.currentDirection, false)
+    }
+    this.currentDirection = next
+    if (next) {
+      this.inputMgr.setVirtualPressed(next, true)
+    }
+  }
+
+  private installTouchHandlers() {
+    this.scene.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      // SUP button has its own handler.
+      if (this.isInSupArea(p)) return
+      // Only one finger drives direction; extras are ignored.
+      if (this.directionPointerId !== null) return
+      this.directionPointerId = p.id
+      this.updateDirectionFromPointer(p)
+    })
+
+    this.scene.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (this.directionPointerId !== p.id) return
+      this.updateDirectionFromPointer(p)
+    })
+
+    const release = (p: Phaser.Input.Pointer) => {
+      if (this.directionPointerId !== p.id) return
+      this.directionPointerId = null
+      this.setDirection(null)
+      // Pulse `up` for exactly one frame: assert it now, clear it on the
+      // next POST_UPDATE — by which point InputManager.update() has already
+      // observed the rising edge and produced a justPressed('up').
+      this.inputMgr.setVirtualPressed('up', true)
+      this.scene.events.once(Phaser.Scenes.Events.POST_UPDATE, () => {
+        this.inputMgr.setVirtualPressed('up', false)
+      })
+    }
+    this.scene.input.on('pointerup', release)
+    this.scene.input.on('pointerupoutside', release)
+  }
+
+  private updateDirectionFromPointer(p: Phaser.Input.Pointer) {
+    const mid = this.scene.scale.width / 2
+    const next: GameAction = p.x < mid ? 'left' : 'right'
+    this.setDirection(next)
   }
 }
