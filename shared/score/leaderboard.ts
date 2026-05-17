@@ -29,7 +29,12 @@ export interface LeaderboardEntry {
   dateIso: string
 }
 
-const MAX_ENTRIES = 10
+/**
+ * Storage cap. Plenty of headroom for a single-device leaderboard; if we
+ * ever back this with Turso/Firebase, the cap can grow further and the
+ * Hall of Fame screen already scrolls.
+ */
+const MAX_ENTRIES = 100
 const MAX_NAME_LENGTH = 16
 
 function storageKey(gameId: string): string {
