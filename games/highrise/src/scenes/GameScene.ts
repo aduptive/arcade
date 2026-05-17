@@ -70,6 +70,19 @@ const BASE_GRAVITY_Y = 1200
 /** Default elastic factor for in-air wall bounces. Maps can override. */
 const DEFAULT_WALL_BOUNCE_FACTOR = 0.7
 
+/**
+ * Icy-Tower-style "run for height" mechanic. Jumping with horizontal speed
+ * makes the jump higher: at GROUND_MAX_SPEED you get up to RUN_JUMP_BONUS_MAX
+ * extra (multiplicative) on the vertical impulse. Standing still = baseline.
+ */
+const RUN_JUMP_BONUS_MAX = 0.45 // up to +45% jump impulse at full speed
+/**
+ * Vertical kick added by an in-air wall hit, scaled by the player's horizontal
+ * speed at the moment of impact. Makes "bounce off a wall while running" a
+ * real height-gain move instead of just a direction change.
+ */
+const WALL_JUMP_VERTICAL_KICK_MAX = 280 // px/s upward (negative vy) at full speed
+
 // Combo system (Phase 4): consecutive new-step-up landings without standing
 // still too long on any step or landing on the same step twice.
 const COMBO_STAND_BREAK_MS = 1500
@@ -394,7 +407,7 @@ export class GameScene extends Phaser.Scene {
     this.pointsText.setScrollFactor(0)
     this.pointsText.setShadow(1, 1, '#000', 0, true, true)
 
-    this.levelText = this.add.text(20, 70, 'LEVEL 1', {
+    this.levelText = this.add.text(20, 70, `LEVEL ${this.currentLevel}`, {
       fontFamily: 'Courier New, monospace',
       fontSize: '14px',
       color: '#c9a96b',
@@ -986,13 +999,20 @@ export class GameScene extends Phaser.Scene {
     //     reach pickups sitting below the player's level.
     if (this.playerBody.blocked.down) {
       if (this.inputMgr.justPressed('action') && this.superJumpCharges > 0) {
+        // Super jump: full impulse + sustained boost. No run bonus needed —
+        // it's already huge and the boost compounds it.
         this.playerBody.setVelocityY(JUMP_VELOCITY)
         this.superBoostUntil = this.time.now + SUPER_JUMP_BOOST_DURATION_MS
         this.superJumpCharges--
         this.flashSuperUsed()
         this.audio.play('super_jump')
       } else if (this.inputMgr.justPressed('up')) {
-        this.playerBody.setVelocityY(JUMP_VELOCITY)
+        // Regular jump gets an Icy-Tower run-for-height bonus: the faster
+        // you were moving horizontally at take-off, the more upward velocity
+        // the jump produces. Standing still = baseline JUMP_VELOCITY.
+        const speedFrac = Math.min(1, Math.abs(this.playerBody.velocity.x) / GROUND_MAX_SPEED)
+        const jumpVel = JUMP_VELOCITY * (1 + speedFrac * RUN_JUMP_BONUS_MAX)
+        this.playerBody.setVelocityY(jumpVel)
         this.audio.play('jump')
       } else if (this.inputMgr.justPressed('down')) {
         this.dropThroughUntil = this.time.now + 250
@@ -1092,13 +1112,23 @@ export class GameScene extends Phaser.Scene {
 
     // Wall bounce: enabled in the air, disabled on ground (otherwise the
     // player gets shoved back while standing next to a wall). When a new
-    // wall hit is detected mid-air, fire a sound for feel.
+    // wall hit is detected mid-air, Icy-Tower-style we ALSO add a vertical
+    // kick proportional to the player's horizontal speed — turns a bounce
+    // off a wall into a real height-gain move when you're running fast.
     const wallBounceFactor = this.mapTheme.wallBounceFactor ?? DEFAULT_WALL_BOUNCE_FACTOR
     this.playerBody.setBounceX(onGround ? 0 : wallBounceFactor)
     const blockedLeft = this.playerBody.blocked.left
     const blockedRight = this.playerBody.blocked.right
     if (!onGround && wallBounceFactor > 0) {
-      if ((blockedLeft && !this.wasBlockedLeft) || (blockedRight && !this.wasBlockedRight)) {
+      const freshWallHit =
+        (blockedLeft && !this.wasBlockedLeft) || (blockedRight && !this.wasBlockedRight)
+      if (freshWallHit) {
+        const speedFrac = Math.min(1, Math.abs(this.playerBody.velocity.x) / GROUND_MAX_SPEED)
+        if (speedFrac > 0.1) {
+          const kick = WALL_JUMP_VERTICAL_KICK_MAX * speedFrac
+          // Only redirect upward — never pull the player down on a wall hit.
+          this.playerBody.setVelocityY(Math.min(this.playerBody.velocity.y, -kick))
+        }
         this.audio.play('wall_bounce')
       }
     }
