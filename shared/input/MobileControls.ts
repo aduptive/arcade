@@ -1,23 +1,26 @@
 import Phaser from 'phaser'
-import type { InputManager, GameAction } from './InputManager'
+import type { InputManager } from './InputManager'
 
 /**
- * Touch-only on-screen controls — Flappy Bird inspired.
+ * Touch-only on-screen controls — trackpad-style swipe + release-to-jump.
  *
  * Model:
- *   - Touch and drag anywhere = direction. Left half of screen = move left,
- *     right half = move right. The direction tracks the finger live, so a
- *     swipe across the midpoint flips it.
- *   - Release the finger = jump (one-shot pulse on `up`).
- *   - A small SUP button in the bottom-right corner triggers the super jump
- *     on tap. Touches that start inside the SUP hit area do NOT count as a
- *     direction touch and do NOT fire a jump on release.
+ *   - One finger anywhere on the screen acts like a trackpad. The horizontal
+ *     finger velocity over the last ~100 ms is read as an analog axis
+ *     (-1..1) and pushed to InputManager. So:
+ *       finger still → axis 0 → player decelerates and stops
+ *       slow swipe   → small axis → slow movement
+ *       fast swipe   → axis near 1 → up to full max speed
+ *   - Lifting the finger fires a one-frame 'up' pulse → jump.
+ *   - A small SUP button in the bottom-right corner triggers the super jump.
+ *     Touches that start in the SUP hit area don't drive direction and don't
+ *     fire a jump on release.
  *
- * Multi-touch: only the first non-SUP pointer drives direction. Extra fingers
- * are ignored to avoid the SUP tap also flipping direction.
+ * Multi-touch: only the first non-SUP pointer drives direction; extras are
+ * ignored.
  *
- * Disables `InputManager`'s built-in swipe/tap detector to prevent double
- * fire on the same pointer events.
+ * Disables `InputManager`'s built-in swipe/tap detector to avoid double-fire
+ * on the same pointer events.
  *
  * Auto-hides on non-touch devices.
  */
@@ -26,9 +29,24 @@ const IS_TOUCH_DEVICE =
   typeof window !== 'undefined' &&
   ('ontouchstart' in window || navigator.maxTouchPoints > 0)
 
+/** Finger speed (px/s) that maps to a full ±1 axis. Tuned so a comfortable
+ *  thumb swipe across roughly half the screen in ~0.3 s hits the max. */
+const FULL_AXIS_FINGER_SPEED = 1200
+/** Rolling window over which finger velocity is measured. Shorter = more
+ *  responsive to direction changes; longer = smoother. */
+const VELOCITY_WINDOW_MS = 100
+/** Below this absolute axis value, treat as zero — keeps tiny tremors from
+ *  registering as movement. */
+const AXIS_DEADZONE = 0.04
+
 export interface MobileControlsOptions {
   /** Force-enable even on desktop (useful for debugging). */
   forceEnable?: boolean
+}
+
+interface Sample {
+  x: number
+  t: number
 }
 
 export class MobileControls {
@@ -37,7 +55,7 @@ export class MobileControls {
   private scene: Phaser.Scene
   private inputMgr: InputManager
   private directionPointerId: number | null = null
-  private currentDirection: 'left' | 'right' | null = null
+  private samples: Sample[] = []
   private supPointerId: number | null = null
   private supCx = 0
   private supCy = 0
@@ -64,12 +82,20 @@ export class MobileControls {
 
     this.supCx = w - margin - supR
     this.supCy = h - margin - supR
-    // Pad the hit radius so a thumb landing "near" the SUP still counts —
-    // and so direction-touch detection knows what area to exclude.
+    // Padded hit radius so a thumb "near" the SUP still counts — and so the
+    // direction reader knows what area to skip.
     this.supHitRadius = supR + 18
 
     this.makeSupButton(this.supCx, this.supCy, supR)
     this.installTouchHandlers()
+
+    // Per-frame decay so axis falls toward 0 when the finger stops moving
+    // even though no new pointermove events fire.
+    scene.events.on(Phaser.Scenes.Events.UPDATE, this.tick, this)
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      scene.events.off(Phaser.Scenes.Events.UPDATE, this.tick, this)
+      inputMgr.clearVirtualAxisX()
+    })
   }
 
   private makeSupButton(cx: number, cy: number, radius: number) {
@@ -119,36 +145,29 @@ export class MobileControls {
     return dx * dx + dy * dy <= this.supHitRadius * this.supHitRadius
   }
 
-  private setDirection(next: 'left' | 'right' | null) {
-    if (this.currentDirection === next) return
-    if (this.currentDirection) {
-      this.inputMgr.setVirtualPressed(this.currentDirection, false)
-    }
-    this.currentDirection = next
-    if (next) {
-      this.inputMgr.setVirtualPressed(next, true)
-    }
-  }
-
   private installTouchHandlers() {
     this.scene.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      // SUP button has its own handler.
       if (this.isInSupArea(p)) return
-      // Only one finger drives direction; extras are ignored.
       if (this.directionPointerId !== null) return
       this.directionPointerId = p.id
-      this.updateDirectionFromPointer(p)
+      this.samples = [{ x: p.x, t: this.scene.time.now }]
+      // Activate the virtual override immediately so keyboard/gamepad don't
+      // also drive movement while a finger is on screen. Starts at 0 (no
+      // motion yet); the first pointermove will set a real velocity.
+      this.inputMgr.setVirtualAxisX(0)
     })
 
     this.scene.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       if (this.directionPointerId !== p.id) return
-      this.updateDirectionFromPointer(p)
+      this.samples.push({ x: p.x, t: this.scene.time.now })
+      this.recomputeAxis()
     })
 
     const release = (p: Phaser.Input.Pointer) => {
       if (this.directionPointerId !== p.id) return
       this.directionPointerId = null
-      this.setDirection(null)
+      this.samples = []
+      this.inputMgr.clearVirtualAxisX()
       // Pulse `up` for exactly one frame: assert it now, clear it on the
       // next POST_UPDATE — by which point InputManager.update() has already
       // observed the rising edge and produced a justPressed('up').
@@ -161,9 +180,36 @@ export class MobileControls {
     this.scene.input.on('pointerupoutside', release)
   }
 
-  private updateDirectionFromPointer(p: Phaser.Input.Pointer) {
-    const mid = this.scene.scale.width / 2
-    const next: GameAction = p.x < mid ? 'left' : 'right'
-    this.setDirection(next)
+  /** Per-frame: drop stale samples and recompute axis. When the finger is
+   *  held still, all samples eventually fall outside the window and the axis
+   *  decays to 0. */
+  private tick() {
+    if (this.directionPointerId === null) return
+    this.recomputeAxis()
+  }
+
+  private recomputeAxis() {
+    const now = this.scene.time.now
+    // Drop samples older than the window.
+    while (this.samples.length > 0 && now - this.samples[0].t > VELOCITY_WINDOW_MS) {
+      this.samples.shift()
+    }
+    if (this.samples.length < 2) {
+      this.inputMgr.setVirtualAxisX(0)
+      return
+    }
+    const oldest = this.samples[0]
+    const newest = this.samples[this.samples.length - 1]
+    const dt = (newest.t - oldest.t) / 1000
+    if (dt <= 0) {
+      this.inputMgr.setVirtualAxisX(0)
+      return
+    }
+    const speed = (newest.x - oldest.x) / dt
+    let axis = speed / FULL_AXIS_FINGER_SPEED
+    if (axis > 1) axis = 1
+    else if (axis < -1) axis = -1
+    if (Math.abs(axis) < AXIS_DEADZONE) axis = 0
+    this.inputMgr.setVirtualAxisX(axis)
   }
 }

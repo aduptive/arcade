@@ -46,6 +46,14 @@ export class InputManager {
   private touchIgnoreBelowY = 0
   /** Master switch for the swipe/tap detector. False = no gesture ever fires. */
   private touchGesturesEnabled = true
+  /**
+   * Analog horizontal axis (-1..1) injected by external systems — primarily
+   * a swipe-velocity reader in mobile controls. While `virtualAxisActive` is
+   * true, this overrides keyboard/gamepad input in `axisX()`, even when the
+   * value is 0 (e.g. finger held still on screen → axis 0, not "no input").
+   */
+  private virtualAxisX = 0
+  private virtualAxisActive = false
 
   private touchStartX = 0
   private touchStartY = 0
@@ -147,6 +155,43 @@ export class InputManager {
    */
   setTouchGesturesEnabled(enabled: boolean) {
     this.touchGesturesEnabled = enabled
+  }
+
+  /**
+   * Push an analog horizontal value (-1..1) from a virtual source (mobile
+   * swipe reader). Setting any value — including 0 — marks the virtual axis
+   * as active and overrides keyboard/gamepad until `clearVirtualAxisX()`.
+   */
+  setVirtualAxisX(value: number) {
+    this.virtualAxisX = Math.max(-1, Math.min(1, value))
+    this.virtualAxisActive = true
+  }
+
+  /** Release the virtual axis override so keyboard/gamepad drive `axisX()` again. */
+  clearVirtualAxisX() {
+    this.virtualAxisX = 0
+    this.virtualAxisActive = false
+  }
+
+  /**
+   * Analog horizontal axis: -1 (full left) to 1 (full right). Sources:
+   *   - virtual override (mobile swipe) when active — even if 0.
+   *   - gamepad left stick (analog, with a deadzone).
+   *   - keyboard left/right digital, contributing ±1.
+   * Returns the source with the largest magnitude.
+   */
+  axisX(): number {
+    if (this.virtualAxisActive) return this.virtualAxisX
+    let result = 0
+    const left = this.actions.get('left')!.pressed
+    const right = this.actions.get('right')!.pressed
+    const digital = left && !right ? -1 : right && !left ? 1 : 0
+    if (Math.abs(digital) > Math.abs(result)) result = digital
+    if (this.gamepad) {
+      const stick = this.gamepad.leftStick.x
+      if (Math.abs(stick) > 0.15 && Math.abs(stick) > Math.abs(result)) result = stick
+    }
+    return result
   }
 
   update() {

@@ -837,9 +837,10 @@ export class GameScene extends Phaser.Scene {
     // Facing flips immediately on input so a quick tap can re-orient the
     // sprite even when the ground deadband has suppressed actual movement.
     // Fall back to velocity for momentum reads when no input is held.
+    const axisX = this.inputMgr.axisX()
     let facing: -1 | 0 | 1 = 0
-    if (this.inputMgr.isPressed('left')) facing = -1
-    else if (this.inputMgr.isPressed('right')) facing = 1
+    if (axisX < -0.05) facing = -1
+    else if (axisX > 0.05) facing = 1
     else if (vx < -10) facing = -1
     else if (vx > 10) facing = 1
 
@@ -926,11 +927,16 @@ export class GameScene extends Phaser.Scene {
   update(_t: number, dt: number) {
     this.inputMgr.update()
 
-    // Track how long each direction has been held — used by the ground
-    // deadband to distinguish "I'm just turning around" from "I want to move".
+    // Read the analog horizontal axis (-1..1). Sources mix keyboard (±1),
+    // gamepad stick, and mobile swipe-velocity. Intensity scales both the
+    // direction and the *target* peak speed: a half-strength swipe caps at
+    // half max speed, so the trackpad-style "small swipe = small movement"
+    // feel comes through naturally.
+    const axisX = this.inputMgr.axisX()
+    const intensity = Math.abs(axisX)
     const now = this.time.now
-    const wantsLeftRaw = this.inputMgr.isPressed('left')
-    const wantsRightRaw = this.inputMgr.isPressed('right')
+    const wantsLeftRaw = axisX < -0.05
+    const wantsRightRaw = axisX > 0.05
     if (wantsLeftRaw) {
       if (this.leftHeldSince === 0) this.leftHeldSince = now
     } else {
@@ -942,27 +948,40 @@ export class GameScene extends Phaser.Scene {
       this.rightHeldSince = 0
     }
 
-    // Horizontal movement:
-    //   - On ground: acceleration-based, gated by a deadband so brief taps
-    //     only flip facing (handled in updatePlayerAnimation) without
-    //     actually moving the body. Holding past the deadband ramps up to
-    //     GROUND_MAX_SPEED. Friction returns the player to rest fast.
-    //   - In air: preserves momentum; input only accelerates, never replaces
-    //     velocity. Releasing the key in mid-air keeps the launched motion.
+    // Horizontal movement, target-tracking model:
+    //   target = axisX * MAX_SPEED (signed)
+    //   - On ground: accelerate toward target. Crossing zero uses the
+    //     stronger reverse-decel constant. A short deadband still mutes
+    //     the very first tap so a quick flick only flips facing.
+    //   - In air: preserves momentum; input only nudges toward target.
+    //   - No input: friction (ground) or drag (air) decays vx.
     const onGround = this.playerBody.blocked.down
     const dtSec = Math.min(dt, 100) / 1000
+    const moveTowardTarget = (
+      vx: number,
+      target: number,
+      sameAccel: number,
+      reverseAccel: number
+    ): number => {
+      const diff = target - vx
+      if (Math.abs(diff) < 1) return target
+      const goingOpposite =
+        Math.sign(vx) !== 0 && Math.sign(target) !== 0 && Math.sign(vx) !== Math.sign(target)
+      const accel = goingOpposite ? reverseAccel : sameAccel
+      const step = Math.sign(diff) * accel * dtSec
+      return Math.abs(step) > Math.abs(diff) ? target : vx + step
+    }
+
     if (onGround) {
       const leftHeldLong =
         wantsLeftRaw && now - this.leftHeldSince >= GROUND_INPUT_DEADBAND_MS
       const rightHeldLong =
         wantsRightRaw && now - this.rightHeldSince >= GROUND_INPUT_DEADBAND_MS
+      const inputActive = (leftHeldLong || rightHeldLong) && intensity > 0
       let vx = this.playerBody.velocity.x
-      if (leftHeldLong) {
-        const accel = vx > 0 ? GROUND_DECEL_REVERSE : GROUND_ACCEL
-        vx -= accel * dtSec
-      } else if (rightHeldLong) {
-        const accel = vx < 0 ? GROUND_DECEL_REVERSE : GROUND_ACCEL
-        vx += accel * dtSec
+      if (inputActive) {
+        const target = axisX * GROUND_MAX_SPEED
+        vx = moveTowardTarget(vx, target, GROUND_ACCEL, GROUND_DECEL_REVERSE)
       } else {
         const friction = GROUND_FRICTION * dtSec
         if (Math.abs(vx) <= friction) vx = 0
@@ -972,14 +991,10 @@ export class GameScene extends Phaser.Scene {
       this.playerBody.setVelocityX(vx)
     } else {
       let vx = this.playerBody.velocity.x
-      const wantsLeft = this.inputMgr.isPressed('left')
-      const wantsRight = this.inputMgr.isPressed('right')
-      if (wantsLeft) {
-        const accel = vx > 0 ? AIR_ACCEL_REVERSE : AIR_ACCEL_SAME
-        vx -= accel * dtSec
-      } else if (wantsRight) {
-        const accel = vx < 0 ? AIR_ACCEL_REVERSE : AIR_ACCEL_SAME
-        vx += accel * dtSec
+      const inputActive = (wantsLeftRaw || wantsRightRaw) && intensity > 0
+      if (inputActive) {
+        const target = axisX * AIR_MAX_SPEED
+        vx = moveTowardTarget(vx, target, AIR_ACCEL_SAME, AIR_ACCEL_REVERSE)
       } else {
         // No input: drag decays residual velocity so brief taps do not drift forever.
         const drag = AIR_DRAG * dtSec
