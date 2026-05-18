@@ -29,9 +29,9 @@ const IS_TOUCH_DEVICE =
   typeof window !== 'undefined' &&
   ('ontouchstart' in window || navigator.maxTouchPoints > 0)
 
-/** Finger speed (px/s) that maps to a full ±1 axis. Tuned so a comfortable
- *  thumb swipe across roughly half the screen in ~0.3 s hits the max. */
-const FULL_AXIS_FINGER_SPEED = 1200
+/** Finger speed (px/s) that maps to a full ±1 axis. Tuned so a light thumb
+ *  swipe saturates quickly — favors responsiveness over precision. */
+const FULL_AXIS_FINGER_SPEED = 500
 /** Rolling window over which finger velocity is measured. Shorter = more
  *  responsive to direction changes; longer = smoother. */
 const VELOCITY_WINDOW_MS = 100
